@@ -31,6 +31,16 @@ const adminNombre = document.getElementById('adminNombre');
 const adminEmail = document.getElementById('adminEmail');
 const adminRol = document.getElementById('adminRol');
 
+// tabs admin
+const tabMensajes = document.getElementById('tabMensajes');
+const tabClientes = document.getElementById('tabClientes');
+const tabUsuarios = document.getElementById('tabUsuarios');
+
+const adminMensajesPanel = document.getElementById('adminMensajesPanel');
+const adminClientesPanel = document.getElementById('adminClientesPanel');
+const adminUsuariosPanel = document.getElementById('adminUsuariosPanel');
+
+// reglas
 const listaReglas = document.getElementById('listaReglas');
 const formEditarRegla = document.getElementById('formEditarRegla');
 const adminResultado = document.getElementById('adminResultado');
@@ -44,11 +54,7 @@ const reglaHoras = document.getElementById('regla_horas');
 const reglaMensaje = document.getElementById('regla_mensaje');
 const reglaActivo = document.getElementById('regla_activo');
 
-const tabMensajes = document.getElementById('tabMensajes');
-const tabClientes = document.getElementById('tabClientes');
-const adminMensajesPanel = document.getElementById('adminMensajesPanel');
-const adminClientesPanel = document.getElementById('adminClientesPanel');
-
+// clientes
 const listaClientes = document.getElementById('listaClientes');
 const formEditarCliente = document.getElementById('formEditarCliente');
 const adminClienteResultado = document.getElementById('adminClienteResultado');
@@ -59,6 +65,19 @@ const clienteNombreAdmin = document.getElementById('cliente_nombre_admin');
 const clienteRutAdmin = document.getElementById('cliente_rut_admin');
 const clienteActivoAdmin = document.getElementById('cliente_activo_admin');
 const clienteEnlistadoAdmin = document.getElementById('cliente_enlistado_admin');
+
+// usuarios
+const listaUsuarios = document.getElementById('listaUsuarios');
+const formEditarUsuario = document.getElementById('formEditarUsuario');
+const adminUsuarioResultado = document.getElementById('adminUsuarioResultado');
+const textoSinUsuarioSeleccionado = document.getElementById('textoSinUsuarioSeleccionado');
+
+const usuarioIdAdmin = document.getElementById('usuario_id_admin');
+const usuarioNombreAdmin = document.getElementById('usuario_nombre_admin');
+const usuarioEmailAdmin = document.getElementById('usuario_email_admin');
+const usuarioRolAdmin = document.getElementById('usuario_rol_admin');
+const usuarioPasswordAdmin = document.getElementById('usuario_password_admin');
+const usuarioActivoAdmin = document.getElementById('usuario_activo_admin');
 
 // botones navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
@@ -83,10 +102,20 @@ document.getElementById('btnVolverCreacion').onclick = volverMenu;
 document.getElementById('btnVolverAdmin').onclick = volverMenu;
 btnCerrarSesion.onclick = cerrarSesion;
 
-tabMensajes.onclick = mostrarTabMensajes;
+// tabs admin
+tabMensajes.onclick = async () => {
+  mostrarTabMensajes();
+  await cargarReglasAdmin();
+};
+
 tabClientes.onclick = async () => {
   mostrarTabClientes();
   await cargarClientesAdmin();
+};
+
+tabUsuarios.onclick = async () => {
+  mostrarTabUsuarios();
+  await cargarUsuariosAdmin();
 };
 
 // formularios
@@ -192,6 +221,9 @@ function mostrarLogin() {
   adminClienteResultado.classList.add('oculto');
   adminClienteResultado.innerHTML = '';
 
+  adminUsuarioResultado.classList.add('oculto');
+  adminUsuarioResultado.innerHTML = '';
+
   volverMenu();
 }
 
@@ -204,13 +236,22 @@ function cerrarSesion() {
 function mostrarTabMensajes() {
   adminMensajesPanel.classList.remove('oculto');
   adminClientesPanel.classList.add('oculto');
+  adminUsuariosPanel.classList.add('oculto');
 }
 
 function mostrarTabClientes() {
   adminMensajesPanel.classList.add('oculto');
   adminClientesPanel.classList.remove('oculto');
+  adminUsuariosPanel.classList.add('oculto');
 }
 
+function mostrarTabUsuarios() {
+  adminMensajesPanel.classList.add('oculto');
+  adminClientesPanel.classList.add('oculto');
+  adminUsuariosPanel.classList.remove('oculto');
+}
+
+// REGLAS
 async function cargarReglasAdmin() {
   if (session?.usuario?.rol !== 'admin') return;
 
@@ -265,6 +306,7 @@ function cargarReglaEnFormulario(regla) {
   adminResultado.innerHTML = '';
 }
 
+// CLIENTES
 async function cargarClientesAdmin() {
   if (session?.usuario?.rol !== 'admin') return;
 
@@ -315,6 +357,60 @@ function cargarClienteEnFormulario(cliente) {
 
   adminClienteResultado.classList.add('oculto');
   adminClienteResultado.innerHTML = '';
+}
+
+// USUARIOS
+async function cargarUsuariosAdmin() {
+  if (session?.usuario?.rol !== 'admin') return;
+
+  listaUsuarios.innerHTML = 'Cargando usuarios...';
+
+  try {
+    const res = await fetch('/api/obtener-usuarios');
+    const data = await res.json();
+
+    if (!res.ok) {
+      listaUsuarios.innerHTML = `<div class="resultado estado-error">No fue posible cargar usuarios: ${data.error || 'Error'}</div>`;
+      return;
+    }
+
+    if (!data.usuarios || data.usuarios.length === 0) {
+      listaUsuarios.innerHTML = '<p>No hay usuarios registrados.</p>';
+      return;
+    }
+
+    listaUsuarios.innerHTML = data.usuarios.map((usuario) => `
+      <button type="button" class="regla-item usuario-item" data-id="${usuario.id}">
+        <strong>#${usuario.id}</strong> - ${usuario.nombre_usuario}
+        <br>
+        <small>${usuario.email} | ${usuario.rol} | ${usuario.activo ? 'Activo' : 'Inactivo'}</small>
+      </button>
+    `).join('');
+
+    document.querySelectorAll('.usuario-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const usuario = data.usuarios.find((u) => u.id === Number(btn.dataset.id));
+        if (usuario) cargarUsuarioEnFormulario(usuario);
+      });
+    });
+  } catch (error) {
+    listaUsuarios.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
+  }
+}
+
+function cargarUsuarioEnFormulario(usuario) {
+  usuarioIdAdmin.value = usuario.id;
+  usuarioNombreAdmin.value = usuario.nombre_usuario || '';
+  usuarioEmailAdmin.value = usuario.email || '';
+  usuarioRolAdmin.value = usuario.rol || '';
+  usuarioPasswordAdmin.value = usuario.password || '';
+  usuarioActivoAdmin.checked = !!usuario.activo;
+
+  textoSinUsuarioSeleccionado.classList.add('oculto');
+  formEditarUsuario.classList.remove('oculto');
+
+  adminUsuarioResultado.classList.add('oculto');
+  adminUsuarioResultado.innerHTML = '';
 }
 
 // restaurar sesión al cargar
@@ -606,5 +702,42 @@ formEditarCliente.addEventListener('submit', async (e) => {
   } catch (error) {
     adminClienteResultado.classList.add('estado-error');
     adminClienteResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
+  }
+});
+
+// EDITAR USUARIO
+formEditarUsuario.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  adminUsuarioResultado.className = 'resultado';
+  adminUsuarioResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
+  adminUsuarioResultado.innerHTML = 'Guardando cambios...';
+
+  try {
+    const res = await fetch('/api/actualizar-usuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: Number(usuarioIdAdmin.value),
+        password: usuarioPasswordAdmin.value,
+        activo: usuarioActivoAdmin.checked
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      adminUsuarioResultado.classList.add('estado-error');
+      adminUsuarioResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible guardar'}`;
+      return;
+    }
+
+    adminUsuarioResultado.classList.add('estado-ok');
+    adminUsuarioResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
+
+    await cargarUsuariosAdmin();
+  } catch (error) {
+    adminUsuarioResultado.classList.add('estado-error');
+    adminUsuarioResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
   }
 });
