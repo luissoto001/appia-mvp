@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APPia - Portal Cliente</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+
+    <!-- LOGIN -->
+    <main class="main" id="loginContainer">
+      <section class="card">
+        <h2>Ingreso al portal</h2>
+
+        <form id="loginForm" class="form">
+          <label>Email</label>
+          <input type="email" id="login_email" required>
+
+          <label>Contraseña</label>
+          <input type="password" id="login_password" required>
+
+          <button type="submit">Ingresar</button>
+        </form>
+
+        <div id="loginResultado" class="resultado oculto"></div>
+      </section>
+    </main>
+
+    <!-- APP -->
+    <div id="appContainer" class="oculto">
+      <header class="header">
+        <div class="brand">
+          <div class="brand-mark">A</div>
+          <div>
+            <h1>APPia</h1>
+            <p id="usuarioInfo"></p>
+          </div>
+        </div>
+      </header>
+
+      <main class="main">
+        <!-- MENU -->
+        <section class="card" id="menuPrincipal">
+          <h2>Selecciona una opción</h2>
+
+          <div class="acciones-grid">
+            <button class="accion-btn" id="btnMostrarConsulta">
+              Consultar ticket
+            </button>
+
+            <button class="accion-btn" id="btnMostrarCreacion">
+              Ingresar ticket
+            </button>
+          </div>
+        </section>
+
+        <!-- CONSULTA -->
+        <section class="card oculto" id="seccionConsulta">
+          <button class="btn-secundario" id="btnVolverConsulta">Volver</button>
+
+          <h2>Consultar ticket</h2>
+
+          <form id="consultaForm" class="form">
+            <input id="rut_empresa_consulta" placeholder="RUT" required>
+            <input id="bpi_consulta" placeholder="BPI" required>
+            <button type="submit">Consultar</button>
+          </form>
+
+          <div id="resultadoConsulta" class="resultado oculto"></div>
+        </section>
+
+        <!-- CREAR -->
+        <section class="card oculto" id="seccionCreacion">
+          <button class="btn-secundario" id="btnVolverCreacion">Volver</button>
+
+          <h2>Crear ticket</h2>
+
+          <form id="crearForm" class="form">
+            <input id="rut_empresa_creacion" placeholder="RUT" required>
+            <input id="bpi_creacion" placeholder="BPI" required>
+
+            <select id="tipo_solicitud" required>
+              <option value="">Tipo</option>
+              <option value="Falla Técnica">Falla Técnica</option>
+              <option value="Requerimiento">Requerimiento</option>
+            </select>
+
+            <textarea id="descripcion_creacion" placeholder="Descripción"></textarea>
+
+            <button type="submit">Crear ticket</button>
+          </form>
+
+          <div id="resultadoCreacion" class="resultado oculto"></div>
+        </section>
+      </main>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

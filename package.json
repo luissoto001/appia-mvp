@@ -1,0 +1,13 @@
+{
+    "name": "proyecto-appia",
+    "version": "1.0.0",
+    "description": "MVP portal autoservicio clientes con login, tickets demo y panel admin",
+    "main": "app.js",
+    "type": "module",
+    "scripts": {
+      "start": "node app.js"
+    },
+    "dependencies": {
+      "@supabase/supabase-js": "^2.49.1"
+    }
+  }
