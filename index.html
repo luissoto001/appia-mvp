@@ -118,7 +118,7 @@
             <button class="btn-secundario" id="btnVolverAdmin" type="button">Volver</button>
           </div>
 
-          <p class="intro">Administración de reglas de mensajes automáticos.</p>
+          <p class="intro">Administración de reglas, clientes, servicios y usuarios.</p>
 
           <div class="cliente-box">
             <div><strong>Usuario admin:</strong> <span id="adminNombre"></span></div>
@@ -222,16 +222,184 @@
           </div>
 
           <div id="adminClientesPanel" class="oculto">
-            <div class="card-interno">
-              <h3>Clientes</h3>
-              <p class="intro">La gestión de clientes sigue disponible en tu versión anterior del admin.</p>
+            <div class="admin-grid">
+              <div class="card-interno">
+                <h3>Clientes existentes</h3>
+                <div id="listaClientes" class="lista-reglas"></div>
+
+                <hr>
+
+                <h3>Nuevo cliente</h3>
+                <form id="formNuevoCliente" class="form">
+                  <label for="nuevo_cliente_nombre">Nombre empresa</label>
+                  <input id="nuevo_cliente_nombre" required>
+
+                  <label for="nuevo_cliente_rut">RUT</label>
+                  <input id="nuevo_cliente_rut" required>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_cliente_activo" checked>
+                    Cliente activo
+                  </label>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_cliente_enlistado" checked>
+                    Cliente enlistado
+                  </label>
+
+                  <button type="submit">Crear cliente</button>
+                </form>
+
+                <div id="adminNuevoClienteResultado" class="resultado oculto"></div>
+              </div>
+
+              <div class="card-interno">
+                <h3>Editar cliente</h3>
+
+                <form id="formEditarCliente" class="form oculto">
+                  <input type="hidden" id="cliente_id_admin">
+
+                  <label for="cliente_nombre_admin">Nombre empresa</label>
+                  <input id="cliente_nombre_admin" disabled>
+
+                  <label for="cliente_rut_admin">RUT</label>
+                  <input id="cliente_rut_admin" disabled>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="cliente_activo_admin">
+                    Cliente activo
+                  </label>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="cliente_enlistado_admin">
+                    Cliente enlistado
+                  </label>
+
+                  <button type="submit">Guardar cambios</button>
+                </form>
+
+                <div id="adminClienteResultado" class="resultado oculto"></div>
+                <p id="textoSinClienteSeleccionado" class="intro">Selecciona un cliente para editarlo.</p>
+
+                <hr>
+
+                <h3>BPI / Servicios del cliente seleccionado</h3>
+                <div id="listaServiciosCliente" class="lista-reglas"></div>
+
+                <form id="formNuevoServicio" class="form oculto">
+                  <label for="nuevo_servicio_bpi">BPI</label>
+                  <input id="nuevo_servicio_bpi" required>
+
+                  <label for="nuevo_servicio_nombre">Nombre servicio</label>
+                  <input id="nuevo_servicio_nombre" required>
+
+                  <label for="nuevo_servicio_direccion">Dirección</label>
+                  <input id="nuevo_servicio_direccion">
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_servicio_activo" checked>
+                    Servicio activo
+                  </label>
+
+                  <button type="submit">Crear servicio/BPI</button>
+                </form>
+
+                <div id="adminNuevoServicioResultado" class="resultado oculto"></div>
+
+                <form id="formEditarServicio" class="form oculto">
+                  <input type="hidden" id="servicio_id_admin">
+
+                  <label for="servicio_bpi_admin">BPI</label>
+                  <input id="servicio_bpi_admin" disabled>
+
+                  <label for="servicio_nombre_admin">Nombre servicio</label>
+                  <input id="servicio_nombre_admin" required>
+
+                  <label for="servicio_direccion_admin">Dirección</label>
+                  <input id="servicio_direccion_admin">
+
+                  <label class="check-line">
+                    <input type="checkbox" id="servicio_activo_admin">
+                    Servicio activo
+                  </label>
+
+                  <button type="submit">Guardar servicio</button>
+                </form>
+
+                <div id="adminServicioResultado" class="resultado oculto"></div>
+                <p id="textoSinServicioSeleccionado" class="intro">Selecciona un servicio para editarlo.</p>
+              </div>
             </div>
           </div>
 
           <div id="adminUsuariosPanel" class="oculto">
-            <div class="card-interno">
-              <h3>Usuarios</h3>
-              <p class="intro">La gestión de usuarios sigue disponible en tu versión anterior del admin.</p>
+            <div class="admin-grid">
+              <div class="card-interno">
+                <h3>Usuarios existentes</h3>
+                <div id="listaUsuarios" class="lista-reglas"></div>
+
+                <hr>
+
+                <h3>Nuevo usuario</h3>
+                <form id="formNuevoUsuario" class="form">
+                  <label for="nuevo_usuario_cliente">Cliente</label>
+                  <select id="nuevo_usuario_cliente" required></select>
+
+                  <label for="nuevo_usuario_nombre">Nombre usuario</label>
+                  <input id="nuevo_usuario_nombre" required>
+
+                  <label for="nuevo_usuario_email">Email</label>
+                  <input id="nuevo_usuario_email" type="email" required>
+
+                  <label for="nuevo_usuario_password">Contraseña</label>
+                  <input id="nuevo_usuario_password" required>
+
+                  <label for="nuevo_usuario_rol">Rol</label>
+                  <select id="nuevo_usuario_rol" required>
+                    <option value="cliente">cliente</option>
+                    <option value="admin">admin</option>
+                  </select>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_usuario_activo" checked>
+                    Usuario activo
+                  </label>
+
+                  <button type="submit">Crear usuario</button>
+                </form>
+
+                <div id="adminNuevoUsuarioResultado" class="resultado oculto"></div>
+              </div>
+
+              <div class="card-interno">
+                <h3>Editar usuario</h3>
+
+                <form id="formEditarUsuario" class="form oculto">
+                  <input type="hidden" id="usuario_id_admin">
+
+                  <label for="usuario_nombre_admin">Nombre usuario</label>
+                  <input id="usuario_nombre_admin" disabled>
+
+                  <label for="usuario_email_admin">Email</label>
+                  <input id="usuario_email_admin" disabled>
+
+                  <label for="usuario_rol_admin">Rol</label>
+                  <input id="usuario_rol_admin" disabled>
+
+                  <label for="usuario_password_admin">Nueva contraseña</label>
+                  <input id="usuario_password_admin" type="text">
+
+                  <label class="check-line">
+                    <input type="checkbox" id="usuario_activo_admin">
+                    Usuario activo
+                  </label>
+
+                  <button type="submit">Guardar cambios</button>
+                </form>
+
+                <div id="adminUsuarioResultado" class="resultado oculto"></div>
+                <p id="textoSinUsuarioSeleccionado" class="intro">Selecciona un usuario para editarlo.</p>
+              </div>
             </div>
           </div>
         </section>
