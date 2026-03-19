@@ -9,16 +9,15 @@
 <body>
   <div class="page">
 
-    <!-- LOGIN -->
     <main class="main" id="loginContainer">
       <section class="card">
         <h2>Ingreso al portal</h2>
 
         <form id="loginForm" class="form">
-          <label>Email</label>
+          <label for="login_email">Email</label>
           <input type="email" id="login_email" required>
 
-          <label>Contraseña</label>
+          <label for="login_password">Contraseña</label>
           <input type="password" id="login_password" required>
 
           <button type="submit">Ingresar</button>
@@ -28,7 +27,6 @@
       </section>
     </main>
 
-    <!-- APP -->
     <div id="appContainer" class="oculto">
       <header class="header">
         <div class="brand">
@@ -41,53 +39,78 @@
       </header>
 
       <main class="main">
-        <!-- MENU -->
         <section class="card" id="menuPrincipal">
           <h2>Selecciona una opción</h2>
+          <p class="intro">Elige la acción que deseas realizar para tu empresa.</p>
+
+          <div class="cliente-box">
+            <div><strong>Cliente:</strong> <span id="clienteNombre"></span></div>
+            <div><strong>RUT:</strong> <span id="clienteRut"></span></div>
+          </div>
 
           <div class="acciones-grid">
-            <button class="accion-btn" id="btnMostrarConsulta">
+            <button class="accion-btn" id="btnMostrarConsulta" type="button">
               Consultar ticket
             </button>
 
-            <button class="accion-btn" id="btnMostrarCreacion">
+            <button class="accion-btn" id="btnMostrarCreacion" type="button">
               Ingresar ticket
             </button>
           </div>
         </section>
 
-        <!-- CONSULTA -->
         <section class="card oculto" id="seccionConsulta">
-          <button class="btn-secundario" id="btnVolverConsulta">Volver</button>
+          <div class="seccion-header">
+            <h2>Consultar ticket</h2>
+            <button class="btn-secundario" id="btnVolverConsulta" type="button">Volver</button>
+          </div>
 
-          <h2>Consultar ticket</h2>
+          <p class="intro">
+            Ingresa el código de servicio BPI para consultar el estado del ticket asociado.
+          </p>
+
+          <div class="cliente-box">
+            <div><strong>Cliente:</strong> <span id="clienteNombreConsulta"></span></div>
+            <div><strong>RUT:</strong> <span id="clienteRutConsulta"></span></div>
+          </div>
 
           <form id="consultaForm" class="form">
-            <input id="rut_empresa_consulta" placeholder="RUT" required>
-            <input id="bpi_consulta" placeholder="BPI" required>
+            <label for="bpi_consulta">Código de servicio (BPI)</label>
+            <input id="bpi_consulta" placeholder="Ej: BPI100001" required>
             <button type="submit">Consultar</button>
           </form>
 
           <div id="resultadoConsulta" class="resultado oculto"></div>
         </section>
 
-        <!-- CREAR -->
         <section class="card oculto" id="seccionCreacion">
-          <button class="btn-secundario" id="btnVolverCreacion">Volver</button>
+          <div class="seccion-header">
+            <h2>Crear ticket</h2>
+            <button class="btn-secundario" id="btnVolverCreacion" type="button">Volver</button>
+          </div>
 
-          <h2>Crear ticket</h2>
+          <p class="intro">
+            Ingresa los datos del servicio para generar un nuevo ticket.
+          </p>
+
+          <div class="cliente-box">
+            <div><strong>Cliente:</strong> <span id="clienteNombreCreacion"></span></div>
+            <div><strong>RUT:</strong> <span id="clienteRutCreacion"></span></div>
+          </div>
 
           <form id="crearForm" class="form">
-            <input id="rut_empresa_creacion" placeholder="RUT" required>
-            <input id="bpi_creacion" placeholder="BPI" required>
+            <label for="bpi_creacion">Código de servicio (BPI)</label>
+            <input id="bpi_creacion" placeholder="Ej: BPI100002" required>
 
+            <label for="tipo_solicitud">Tipo de solicitud</label>
             <select id="tipo_solicitud" required>
-              <option value="">Tipo</option>
+              <option value="">Selecciona una opción</option>
               <option value="Falla Técnica">Falla Técnica</option>
               <option value="Requerimiento">Requerimiento</option>
             </select>
 
-            <textarea id="descripcion_creacion" placeholder="Descripción"></textarea>
+            <label for="descripcion_creacion">Descripción</label>
+            <textarea id="descripcion_creacion" placeholder="Describe la solicitud o incidencia"></textarea>
 
             <button type="submit">Crear ticket</button>
           </form>
