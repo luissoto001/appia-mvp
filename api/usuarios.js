@@ -1,10 +1,22 @@
 ﻿import { supabase } from '../config/supabase.js';
 
-async function obtenerUsuarios(res) {
-  const { data, error } = await supabase
+async function obtenerUsuarios(req, res) {
+  const q = (req.query?.q || '').trim();
+  const page = Math.max(parseInt(req.query?.page || '1', 10), 1);
+  const limit = Math.min(Math.max(parseInt(req.query?.limit || '20', 10), 1), 100);
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
+
+  let query = supabase
     .from('usuarios_demo')
-    .select('*')
+    .select('*', { count: 'exact' })
     .order('id', { ascending: true });
+
+  if (q) {
+    query = query.or(`nombre_usuario.ilike.%${q}%,email.ilike.%${q}%,rol.ilike.%${q}%`);
+  }
+
+  const { data, error, count } = await query.range(from, to);
 
   if (error) {
     return res.status(500).json({
@@ -18,9 +30,21 @@ async function obtenerUsuarios(res) {
     password: ''
   }));
 
+  const total = count || 0;
+  const total_pages = Math.max(Math.ceil(total / limit), 1);
+
   return res.status(200).json({
     ok: true,
-    usuarios: usuariosSanitizados
+    usuarios: usuariosSanitizados,
+    pagination: {
+      page,
+      limit,
+      total,
+      total_pages,
+      has_prev: page > 1,
+      has_next: page < total_pages
+    },
+    busqueda: q
   });
 }
 
@@ -109,7 +133,7 @@ async function actualizarUsuario(body, res) {
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      return await obtenerUsuarios(res);
+      return await obtenerUsuarios(req, res);
     }
 
     if (req.method === 'POST') {

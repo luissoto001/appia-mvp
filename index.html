@@ -12,7 +12,7 @@
     <main class="main" id="loginContainer">
       <section class="card login-card">
         <h2>Ingreso al portal</h2>
-        <div id="loginVersion" class="login-version">Versión 0.2.0</div>
+        <div id="loginVersion" class="login-version">Versión 0.2.1</div>
 
         <form id="loginForm" class="form">
           <label for="login_email">Email</label>
@@ -376,10 +376,17 @@
               <div class="card-interno admin-stack">
                 <div>
                   <h3>Usuarios existentes</h3>
-                  <div class="panel-helper">Busca por nombre, email o rol.</div>
+                  <div class="panel-helper">Búsqueda server-side con paginación.</div>
                   <div class="admin-search">
-                    <input id="buscarUsuarios" placeholder="Buscar usuario...">
+                    <input id="buscarUsuarios" placeholder="Buscar usuario por nombre, email o rol...">
                   </div>
+
+                  <div class="paginacion-linea">
+                    <button type="button" class="btn-secundario" id="btnUsuariosPrev">Anterior</button>
+                    <span id="usuariosPaginaInfo">Página 1 de 1</span>
+                    <button type="button" class="btn-secundario" id="btnUsuariosNext">Siguiente</button>
+                  </div>
+
                   <div id="listaUsuarios" class="lista-reglas list-scroll"></div>
                 </div>
 

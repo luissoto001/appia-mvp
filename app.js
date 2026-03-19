@@ -1,4 +1,4 @@
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.2.1';
 
 let session = null;
 
@@ -64,6 +64,11 @@ const buscarUsuarios = document.getElementById('buscarUsuarios');
 const btnClientesPrev = document.getElementById('btnClientesPrev');
 const btnClientesNext = document.getElementById('btnClientesNext');
 const clientesPaginaInfo = document.getElementById('clientesPaginaInfo');
+
+// Paginación usuarios
+const btnUsuariosPrev = document.getElementById('btnUsuariosPrev');
+const btnUsuariosNext = document.getElementById('btnUsuariosNext');
+const usuariosPaginaInfo = document.getElementById('usuariosPaginaInfo');
 
 // Reglas
 const listaReglas = document.getElementById('listaReglas');
@@ -179,6 +184,7 @@ let reglasCache = [];
 let clientesCache = [];
 let serviciosCache = [];
 let usuariosCache = [];
+
 let clientesPagination = {
   page: 1,
   limit: 20,
@@ -188,7 +194,17 @@ let clientesPagination = {
   has_next: false
 };
 
+let usuariosPagination = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  total_pages: 1,
+  has_prev: false,
+  has_next: false
+};
+
 let clientesSearchTimer = null;
+let usuariosSearchTimer = null;
 
 // Navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
@@ -226,7 +242,7 @@ tabClientes.onclick = async () => {
 
 tabUsuarios.onclick = async () => {
   mostrarTabUsuarios();
-  await cargarUsuariosAdmin();
+  await cargarUsuariosAdmin(1);
   await cargarClientesParaSelectUsuario();
 };
 
@@ -243,13 +259,19 @@ kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
 kpiCardCerrados.onclick = () => cargarDetalleReportes('cerrados');
 
 buscarReglas.addEventListener('input', () => renderReglas(reglasCache));
-buscarUsuarios.addEventListener('input', () => renderUsuarios(usuariosCache));
 buscarServicios.addEventListener('input', () => renderServicios(serviciosCache));
 
 buscarClientes.addEventListener('input', () => {
   clearTimeout(clientesSearchTimer);
   clientesSearchTimer = setTimeout(() => {
     cargarClientesAdmin(1);
+  }, 350);
+});
+
+buscarUsuarios.addEventListener('input', () => {
+  clearTimeout(usuariosSearchTimer);
+  usuariosSearchTimer = setTimeout(() => {
+    cargarUsuariosAdmin(1);
   }, 350);
 });
 
@@ -262,6 +284,18 @@ btnClientesPrev.addEventListener('click', async () => {
 btnClientesNext.addEventListener('click', async () => {
   if (clientesPagination.has_next) {
     await cargarClientesAdmin(clientesPagination.page + 1);
+  }
+});
+
+btnUsuariosPrev.addEventListener('click', async () => {
+  if (usuariosPagination.has_prev) {
+    await cargarUsuariosAdmin(usuariosPagination.page - 1);
+  }
+});
+
+btnUsuariosNext.addEventListener('click', async () => {
+  if (usuariosPagination.has_next) {
+    await cargarUsuariosAdmin(usuariosPagination.page + 1);
   }
 });
 
@@ -805,23 +839,12 @@ function renderServicios(servicios) {
 }
 
 function renderUsuarios(usuarios) {
-  const filtro = buscarUsuarios.value.trim();
-
-  const filtrados = !filtro
-    ? usuarios
-    : usuarios.filter((usuario) =>
-        coincideBusqueda(
-          `${usuario.nombre_usuario} ${usuario.email} ${usuario.rol}`,
-          filtro
-        )
-      );
-
-  if (!filtrados.length) {
-    listaUsuarios.innerHTML = '<p>No hay usuarios que coincidan con la búsqueda.</p>';
+  if (!usuarios.length) {
+    listaUsuarios.innerHTML = '<p>No hay usuarios para esta búsqueda.</p>';
     return;
   }
 
-  listaUsuarios.innerHTML = filtrados.map((usuario) => `
+  listaUsuarios.innerHTML = usuarios.map((usuario) => `
     <button type="button" class="regla-item usuario-item" data-id="${usuario.id}">
       <strong>#${usuario.id}</strong> - ${usuario.nombre_usuario}
       <small>${usuario.email} | ${usuario.rol} | ${usuario.activo ? 'Activo' : 'Inactivo'}</small>
@@ -844,6 +867,12 @@ function renderUsuarios(usuarios) {
       formEditarUsuario.classList.remove('oculto');
     });
   });
+}
+
+function actualizarPaginacionUsuarios() {
+  usuariosPaginaInfo.innerText = `Página ${usuariosPagination.page} de ${usuariosPagination.total_pages} · ${usuariosPagination.total} resultados`;
+  btnUsuariosPrev.disabled = !usuariosPagination.has_prev;
+  btnUsuariosNext.disabled = !usuariosPagination.has_next;
 }
 
 // LOGIN
@@ -1318,11 +1347,12 @@ async function cargarClientesParaSelectUsuario() {
   }
 }
 
-async function cargarUsuariosAdmin() {
+async function cargarUsuariosAdmin(page = 1) {
   listaUsuarios.innerHTML = 'Cargando usuarios...';
 
   try {
-    const res = await fetch('/api/usuarios');
+    const q = buscarUsuarios.value.trim();
+    const res = await fetch(`/api/usuarios?q=${encodeURIComponent(q)}&page=${page}&limit=20`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -1331,7 +1361,10 @@ async function cargarUsuariosAdmin() {
     }
 
     usuariosCache = data.usuarios || [];
+    usuariosPagination = data.pagination || usuariosPagination;
+
     renderUsuarios(usuariosCache);
+    actualizarPaginacionUsuarios();
   } catch (error) {
     listaUsuarios.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -1379,7 +1412,7 @@ formNuevoUsuario.addEventListener('submit', async (e) => {
     nuevoUsuarioActivo.checked = true;
 
     setResultado(adminNuevoUsuarioResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
-    await cargarUsuariosAdmin();
+    await cargarUsuariosAdmin(1);
   } catch (error) {
     setResultado(adminNuevoUsuarioResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
   }
@@ -1423,7 +1456,7 @@ formEditarUsuario.addEventListener('submit', async (e) => {
 
     usuarioPasswordAdmin.value = '';
     setResultado(adminUsuarioResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
-    await cargarUsuariosAdmin();
+    await cargarUsuariosAdmin(usuariosPagination.page);
   } catch (error) {
     setResultado(adminUsuarioResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
   }
