@@ -63,7 +63,7 @@
             <button class="btn-secundario" id="btnVolverConsulta" type="button">Volver</button>
           </div>
 
-          <p class="intro">Ingresa el código de servicio BPI para consultar el estado del ticket asociado.</p>
+          <p class="intro">Puedes consultar por BPI, por número de ticket, o ver todos tus tickets abiertos.</p>
 
           <div class="cliente-box">
             <div><strong>Cliente:</strong> <span id="clienteNombreConsulta"></span></div>
@@ -71,8 +71,23 @@
           </div>
 
           <form id="consultaForm" class="form">
-            <label for="bpi_consulta">Código de servicio (BPI)</label>
-            <input id="bpi_consulta" placeholder="Ej: BPI100001" required>
+            <label for="modo_consulta">Modo de consulta</label>
+            <select id="modo_consulta" required>
+              <option value="bpi">Por BPI</option>
+              <option value="ticket">Por N° de ticket</option>
+              <option value="abiertos">Todos mis tickets abiertos</option>
+            </select>
+
+            <div id="campoConsultaBpi">
+              <label for="bpi_consulta">Código de servicio (BPI)</label>
+              <input id="bpi_consulta" placeholder="Ej: BPI100001">
+            </div>
+
+            <div id="campoConsultaTicket" class="oculto">
+              <label for="ticket_consulta">Número de ticket</label>
+              <input id="ticket_consulta" placeholder="Ej: TK-10001">
+            </div>
+
             <button type="submit">Consultar</button>
           </form>
 

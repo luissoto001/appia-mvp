@@ -28,6 +28,11 @@ const consultaForm = document.getElementById('consultaForm');
 const crearForm = document.getElementById('crearForm');
 const resultadoConsulta = document.getElementById('resultadoConsulta');
 const resultadoCreacion = document.getElementById('resultadoCreacion');
+const modoConsulta = document.getElementById('modo_consulta');
+const campoConsultaBpi = document.getElementById('campoConsultaBpi');
+const campoConsultaTicket = document.getElementById('campoConsultaTicket');
+const bpiConsulta = document.getElementById('bpi_consulta');
+const ticketConsulta = document.getElementById('ticket_consulta');
 
 // Admin base
 const btnMostrarAdmin = document.getElementById('btnMostrarAdmin');
@@ -174,6 +179,8 @@ tabUsuarios.onclick = async () => {
   await cargarClientesParaSelectUsuario();
 };
 
+modoConsulta.addEventListener('change', actualizarModoConsulta);
+
 function ocultarTodasLasSecciones() {
   menuPrincipal.classList.add('oculto');
   seccionConsulta.classList.add('oculto');
@@ -259,6 +266,7 @@ function mostrarAplicacion() {
 
   cargarDatosClienteEnPantalla();
   configurarVisibilidadAdmin();
+  actualizarModoConsulta();
 }
 
 function mostrarLogin() {
@@ -281,6 +289,83 @@ function setResultado(elemento, tipo, html) {
   elemento.classList.remove('oculto', 'estado-ok', 'estado-error');
   if (tipo) elemento.classList.add(tipo);
   elemento.innerHTML = html;
+}
+
+function actualizarModoConsulta() {
+  const modo = modoConsulta.value;
+
+  if (modo === 'bpi') {
+    campoConsultaBpi.classList.remove('oculto');
+    campoConsultaTicket.classList.add('oculto');
+    bpiConsulta.required = true;
+    ticketConsulta.required = false;
+  } else if (modo === 'ticket') {
+    campoConsultaBpi.classList.add('oculto');
+    campoConsultaTicket.classList.remove('oculto');
+    bpiConsulta.required = false;
+    ticketConsulta.required = true;
+  } else {
+    campoConsultaBpi.classList.add('oculto');
+    campoConsultaTicket.classList.add('oculto');
+    bpiConsulta.required = false;
+    ticketConsulta.required = false;
+  }
+}
+
+function renderTicketIndividual(data) {
+  const ticketHtml = data.ticket
+    ? `
+      <div class="resultado-item"><strong>Ticket:</strong> ${data.ticket.ticket_numero}</div>
+      <div class="resultado-item"><strong>Estado:</strong> ${data.ticket.estado}</div>
+      <div class="resultado-item"><strong>Área resolutora:</strong> ${data.ticket.area_resolutora}</div>
+      <div class="resultado-item"><strong>Tipología:</strong> ${data.ticket.tipologia}</div>
+      <div class="resultado-item"><strong>Descripción:</strong> ${data.ticket.descripcion}</div>
+      <div class="resultado-item"><strong>Horas transcurridas:</strong> ${data.horas_transcurridas ?? 'No disponible'}</div>
+      <div class="mensaje-automatico">
+        <strong>Mensaje automático:</strong>
+        <p>${data.mensaje || 'Sin mensaje disponible.'}</p>
+      </div>
+    `
+    : `<div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>`;
+
+  return `
+    <h3>Consulta exitosa</h3>
+    <div class="resultado-item"><strong>Cliente:</strong> ${data.cliente.nombre_empresa}</div>
+    ${data.servicio ? `<div class="resultado-item"><strong>Servicio:</strong> ${data.servicio.nombre_servicio}</div>` : ''}
+    ${data.servicio ? `<div class="resultado-item"><strong>BPI:</strong> ${data.servicio.bpi}</div>` : ''}
+    ${data.servicio ? `<div class="resultado-item"><strong>Dirección:</strong> ${data.servicio.direccion || ''}</div>` : ''}
+    ${ticketHtml}
+  `;
+}
+
+function renderTicketsAbiertos(data) {
+  if (!data.tickets || data.tickets.length === 0) {
+    return `
+      <h3>Tickets abiertos</h3>
+      <div class="resultado-item">${data.mensaje}</div>
+    `;
+  }
+
+  const items = data.tickets.map((ticket) => `
+    <div class="ticket-list-item">
+      <div class="resultado-item"><strong>Ticket:</strong> ${ticket.ticket_numero}</div>
+      <div class="resultado-item"><strong>Estado:</strong> ${ticket.estado}</div>
+      <div class="resultado-item"><strong>Área resolutora:</strong> ${ticket.area_resolutora}</div>
+      <div class="resultado-item"><strong>Tipología:</strong> ${ticket.tipologia}</div>
+      <div class="resultado-item"><strong>BPI:</strong> ${ticket.bpi}</div>
+      <div class="resultado-item"><strong>Servicio:</strong> ${ticket.servicio_nombre || 'No disponible'}</div>
+      <div class="resultado-item"><strong>Dirección:</strong> ${ticket.servicio_direccion || 'No disponible'}</div>
+      <div class="resultado-item"><strong>Descripción:</strong> ${ticket.descripcion || ''}</div>
+      <hr>
+    </div>
+  `).join('');
+
+  return `
+    <h3>Tickets abiertos</h3>
+    <div class="resultado-item"><strong>Cliente:</strong> ${data.cliente.nombre_empresa}</div>
+    <div class="resultado-item"><strong>Total abiertos:</strong> ${data.tickets.length}</div>
+    ${items}
+  `;
 }
 
 // LOGIN
@@ -328,17 +413,28 @@ loginForm.addEventListener('submit', async (e) => {
 consultaForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  setResultado(resultadoConsulta, '', 'Consultando ticket...');
+  const modo = modoConsulta.value;
+  setResultado(resultadoConsulta, '', 'Consultando...');
 
   try {
+    let body = {
+      rut_empresa: session.cliente.rut_empresa
+    };
+
+    if (modo === 'bpi') {
+      body.action = 'consultar_por_bpi';
+      body.bpi = bpiConsulta.value.trim();
+    } else if (modo === 'ticket') {
+      body.action = 'consultar_por_ticket';
+      body.ticket_numero = ticketConsulta.value.trim();
+    } else {
+      body.action = 'consultar_abiertos_cliente';
+    }
+
     const res = await fetch('/api/tickets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'consultar',
-        rut_empresa: session.cliente.rut_empresa,
-        bpi: document.getElementById('bpi_consulta').value.trim()
-      })
+      body: JSON.stringify(body)
     });
 
     const data = await res.json();
@@ -348,29 +444,11 @@ consultaForm.addEventListener('submit', async (e) => {
       return;
     }
 
-    const ticketHtml = data.ticket
-      ? `
-        <div class="resultado-item"><strong>Ticket:</strong> ${data.ticket.ticket_numero}</div>
-        <div class="resultado-item"><strong>Estado:</strong> ${data.ticket.estado}</div>
-        <div class="resultado-item"><strong>Área resolutora:</strong> ${data.ticket.area_resolutora}</div>
-        <div class="resultado-item"><strong>Tipología:</strong> ${data.ticket.tipologia}</div>
-        <div class="resultado-item"><strong>Descripción:</strong> ${data.ticket.descripcion}</div>
-        <div class="resultado-item"><strong>Horas transcurridas:</strong> ${data.horas_transcurridas ?? 'No disponible'}</div>
-        <div class="mensaje-automatico">
-          <strong>Mensaje automático:</strong>
-          <p>${data.mensaje || 'Sin mensaje disponible.'}</p>
-        </div>
-      `
-      : `<div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>`;
-
-    setResultado(resultadoConsulta, 'estado-ok', `
-      <h3>Consulta exitosa</h3>
-      <div class="resultado-item"><strong>Cliente:</strong> ${data.cliente.nombre_empresa}</div>
-      <div class="resultado-item"><strong>Servicio:</strong> ${data.servicio.nombre_servicio}</div>
-      <div class="resultado-item"><strong>BPI:</strong> ${data.servicio.bpi}</div>
-      <div class="resultado-item"><strong>Dirección:</strong> ${data.servicio.direccion}</div>
-      ${ticketHtml}
-    `);
+    if (modo === 'abiertos') {
+      setResultado(resultadoConsulta, 'estado-ok', renderTicketsAbiertos(data));
+    } else {
+      setResultado(resultadoConsulta, 'estado-ok', renderTicketIndividual(data));
+    }
   } catch (error) {
     setResultado(resultadoConsulta, 'estado-error', `<strong>Error:</strong> ${error.message}`);
   }
@@ -469,7 +547,6 @@ async function cargarReglasAdmin() {
 
         textoSinSeleccion.classList.add('oculto');
         formEditarRegla.classList.remove('oculto');
-        adminResultado.classList.add('oculto');
       });
     });
   } catch (error) {
@@ -680,8 +757,7 @@ formEditarCliente.addEventListener('submit', async (e) => {
 async function cargarServiciosCliente(clienteId) {
   listaServiciosCliente.innerHTML = 'Cargando servicios...';
   formEditarServicio.classList.add('oculto');
-  setResultado(adminServicioResultado, '', '');
-  adminServicioResultado.classList.add('oculto');
+  textoSinServicioSeleccionado.classList.remove('oculto');
 
   try {
     const res = await fetch(`/api/servicios?cliente_id=${clienteId}`);

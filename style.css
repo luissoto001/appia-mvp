@@ -333,3 +333,6 @@
     border-top: 1px solid var(--color-borde);
     margin: 20px 0;
   }
+  .ticket-list-item {
+    padding: 10px 0;
+  }
