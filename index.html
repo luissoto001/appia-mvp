@@ -12,7 +12,7 @@
     <main class="main" id="loginContainer">
       <section class="card login-card">
         <h2>Ingreso al portal</h2>
-        <div id="loginVersion" class="login-version">Versión 0.2.2</div>
+        <div id="loginVersion" class="login-version">Versión 0.3.0</div>
 
         <form id="loginForm" class="form">
           <label for="login_email">Email</label>
@@ -464,6 +464,45 @@
           </div>
 
           <div id="adminReportesPanel" class="oculto">
+            <div class="card-interno">
+              <h3>Filtros</h3>
+
+              <div class="admin-grid">
+                <div>
+                  <label for="filtroFechaDesde">Desde</label>
+                  <input type="date" id="filtroFechaDesde">
+                </div>
+
+                <div>
+                  <label for="filtroFechaHasta">Hasta</label>
+                  <input type="date" id="filtroFechaHasta">
+                </div>
+
+                <div>
+                  <label for="filtroCliente">Cliente</label>
+                  <select id="filtroCliente">
+                    <option value="">Todos</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="filtroEstado">Estado</label>
+                  <select id="filtroEstado">
+                    <option value="">Todos</option>
+                    <option value="Ingresado">Ingresado</option>
+                    <option value="En proceso">En proceso</option>
+                    <option value="Derivado">Derivado</option>
+                    <option value="Resuelto">Resuelto</option>
+                    <option value="Cerrado">Cerrado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-top: 14px;">
+                <button class="accion-btn" id="btnAplicarFiltros" type="button">Aplicar filtros</button>
+              </div>
+            </div>
+
             <div class="reportes-grid">
               <button class="kpi-card kpi-click" id="kpiCardTotal" type="button">
                 <span>Total tickets</span>

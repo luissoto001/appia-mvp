@@ -1,4 +1,4 @@
-const APP_VERSION = '0.2.2';
+const APP_VERSION = '0.3.0';
 
 let session = null;
 
@@ -182,6 +182,12 @@ const kpiCardTotal = document.getElementById('kpiCardTotal');
 const kpiCardAbiertos = document.getElementById('kpiCardAbiertos');
 const kpiCardCerrados = document.getElementById('kpiCardCerrados');
 
+const filtroFechaDesde = document.getElementById('filtroFechaDesde');
+const filtroFechaHasta = document.getElementById('filtroFechaHasta');
+const filtroCliente = document.getElementById('filtroCliente');
+const filtroEstado = document.getElementById('filtroEstado');
+const btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
+
 let clienteSeleccionadoId = null;
 
 // cachés
@@ -263,11 +269,13 @@ tabUsuarios.onclick = async () => {
 
 tabReportes.onclick = async () => {
   mostrarTabReportes();
+  await cargarClientesFiltro();
   await cargarReportesAdmin();
 };
 
 modoConsulta.addEventListener('change', actualizarModoConsulta);
 btnCerrarDetalleReportes.onclick = limpiarDetalleReportes;
+btnAplicarFiltros.onclick = () => cargarReportesAdmin();
 
 kpiCardTotal.onclick = () => cargarDetalleReportes('todos');
 kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
@@ -471,6 +479,27 @@ function normalizarTexto(valor) {
 
 function coincideBusqueda(textoBase, textoBusqueda) {
   return normalizarTexto(textoBase).includes(normalizarTexto(textoBusqueda));
+}
+
+function obtenerFiltrosReportes() {
+  return {
+    fecha_desde: filtroFechaDesde.value || '',
+    fecha_hasta: filtroFechaHasta.value || '',
+    cliente_id: filtroCliente.value || '',
+    estado: filtroEstado.value || ''
+  };
+}
+
+function construirQueryParams(obj) {
+  const params = new URLSearchParams();
+
+  Object.entries(obj).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value) !== '') {
+      params.set(key, value);
+    }
+  });
+
+  return params.toString();
 }
 
 function actualizarModoConsulta() {
@@ -727,11 +756,15 @@ async function cargarDetalleReportes(filtro, valor = '') {
   detalleReportesLista.innerHTML = 'Cargando detalle...';
 
   try {
-    const url = valor
-      ? `/api/reportes?modo=detalle&filtro=${encodeURIComponent(filtro)}&valor=${encodeURIComponent(valor)}`
-      : `/api/reportes?modo=detalle&filtro=${encodeURIComponent(filtro)}`;
+    const filtros = obtenerFiltrosReportes();
+    const queryString = construirQueryParams({
+      modo: 'detalle',
+      filtro,
+      valor,
+      ...filtros
+    });
 
-    const res = await fetch(url);
+    const res = await fetch(`/api/reportes?${queryString}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -1382,6 +1415,27 @@ async function cargarClientesParaSelectUsuario() {
   }
 }
 
+async function cargarClientesFiltro() {
+  try {
+    const res = await fetch('/api/clientes?mode=select');
+    const data = await res.json();
+
+    if (!res.ok || !data.clientes) {
+      filtroCliente.innerHTML = '<option value="">Todos</option>';
+      return;
+    }
+
+    filtroCliente.innerHTML =
+      '<option value="">Todos</option>' +
+      data.clientes
+        .map((cliente) => `<option value="${cliente.id}">${cliente.nombre_empresa}</option>`)
+        .join('');
+  } catch (error) {
+    console.error(error);
+    filtroCliente.innerHTML = '<option value="">Todos</option>';
+  }
+}
+
 async function cargarUsuariosAdmin(page = 1) {
   listaUsuarios.innerHTML = 'Cargando usuarios...';
 
@@ -1504,7 +1558,9 @@ async function cargarReportesAdmin() {
   limpiarDetalleReportes();
 
   try {
-    const res = await fetch('/api/reportes');
+    const filtros = obtenerFiltrosReportes();
+    const queryString = construirQueryParams(filtros);
+    const res = await fetch(`/api/reportes?${queryString}`);
     const data = await res.json();
 
     if (!res.ok) {

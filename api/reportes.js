@@ -1,124 +1,186 @@
 ﻿import { supabase } from '../config/supabase.js';
 
-function agruparPor(items, key) {
-  const mapa = {};
-
-  for (const item of items) {
-    const valor = item[key] || 'Sin dato';
-    mapa[valor] = (mapa[valor] || 0) + 1;
+function aplicarFiltros(query, filtros) {
+  if (filtros.fecha_desde) {
+    query = query.gte('created_at', `${filtros.fecha_desde}T00:00:00`);
   }
 
-  return Object.entries(mapa)
-    .map(([nombre, total]) => ({ nombre, total }))
-    .sort((a, b) => b.total - a.total);
+  if (filtros.fecha_hasta) {
+    query = query.lte('created_at', `${filtros.fecha_hasta}T23:59:59`);
+  }
+
+  if (filtros.cliente_id) {
+    query = query.eq('cliente_id', Number(filtros.cliente_id));
+  }
+
+  if (filtros.estado) {
+    query = query.eq('estado', filtros.estado);
+  }
+
+  return query;
 }
 
-function enriquecerTickets(tickets, clientesPorId) {
-  return (tickets || []).map((ticket) => ({
+async function enriquecerTickets(tickets) {
+  if (!tickets || tickets.length === 0) {
+    return [];
+  }
+
+  const clienteIds = [...new Set(tickets.map((t) => t.cliente_id).filter(Boolean))];
+
+  let clientesMap = {};
+  if (clienteIds.length > 0) {
+    const { data: clientesData } = await supabase
+      .from('clientes_demo')
+      .select('id, nombre_empresa')
+      .in('id', clienteIds);
+
+    clientesMap = Object.fromEntries((clientesData || []).map((c) => [c.id, c.nombre_empresa]));
+  }
+
+  return tickets.map((ticket) => ({
     ...ticket,
-    cliente_nombre: clientesPorId[ticket.cliente_id] || 'Cliente no identificado'
+    cliente_nombre: clientesMap[ticket.cliente_id] || `Cliente ${ticket.cliente_id || ''}`
   }));
 }
 
 export default async function handler(req, res) {
   try {
-    if (req.method !== 'GET') {
-      return res.status(405).json({
-        error: 'Método no permitido'
-      });
-    }
+    const {
+      modo,
+      filtro,
+      valor,
+      fecha_desde,
+      fecha_hasta,
+      cliente_id,
+      estado
+    } = req.query;
 
-    const { modo, filtro, valor } = req.query || {};
-
-    const { data: tickets, error: ticketsError } = await supabase
-      .from('tickets')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (ticketsError) {
-      return res.status(500).json({
-        error: 'Error obteniendo tickets',
-        detalle: ticketsError.message
-      });
-    }
-
-    const { data: clientes, error: clientesError } = await supabase
-      .from('clientes_demo')
-      .select('id, nombre_empresa');
-
-    if (clientesError) {
-      return res.status(500).json({
-        error: 'Error obteniendo clientes',
-        detalle: clientesError.message
-      });
-    }
-
-    const clientesPorId = {};
-    (clientes || []).forEach((cliente) => {
-      clientesPorId[cliente.id] = cliente.nombre_empresa;
-    });
-
-    const ticketsConCliente = enriquecerTickets(tickets, clientesPorId);
-    const abiertosEstados = ['Ingresado', 'En proceso', 'Derivado'];
+    const filtros = {
+      fecha_desde: fecha_desde || '',
+      fecha_hasta: fecha_hasta || '',
+      cliente_id: cliente_id || '',
+      estado: estado || ''
+    };
 
     if (modo === 'detalle') {
-      let filtrados = [...ticketsConCliente];
+      let query = supabase
+        .from('tickets_demo')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      query = aplicarFiltros(query, filtros);
+
+      if (filtro === 'estado' && valor) {
+        query = query.eq('estado', valor);
+      }
+
+      if (filtro === 'tipologia' && valor) {
+        query = query.eq('tipologia', valor);
+      }
+
+      if (filtro === 'cliente' && valor) {
+        query = query.eq('cliente_id', Number(valor));
+      }
 
       if (filtro === 'abiertos') {
-        filtrados = filtrados.filter((t) => abiertosEstados.includes(t.estado));
-      } else if (filtro === 'cerrados') {
-        filtrados = filtrados.filter((t) => !abiertosEstados.includes(t.estado));
-      } else if (filtro === 'estado' && valor) {
-        filtrados = filtrados.filter((t) => t.estado === valor);
-      } else if (filtro === 'tipologia' && valor) {
-        filtrados = filtrados.filter((t) => t.tipologia === valor);
-      } else if (filtro === 'cliente' && valor) {
-        filtrados = filtrados.filter((t) => t.cliente_nombre === valor);
-      } else if (filtro === 'todos') {
-        filtrados = [...ticketsConCliente];
+        query = query.neq('estado', 'Cerrado');
       }
+
+      if (filtro === 'cerrados') {
+        query = query.eq('estado', 'Cerrado');
+      }
+
+      const { data, error } = await query.limit(200);
+
+      if (error) {
+        return res.status(500).json({
+          error: 'Error obteniendo detalle de tickets',
+          detalle: error.message
+        });
+      }
+
+      const ticketsEnriquecidos = await enriquecerTickets(data || []);
 
       return res.status(200).json({
         ok: true,
-        tickets: filtrados
+        tickets: ticketsEnriquecidos
       });
     }
 
-    const totalTickets = ticketsConCliente.length;
-    const abiertos = ticketsConCliente.filter((t) => abiertosEstados.includes(t.estado)).length;
-    const cerrados = totalTickets - abiertos;
+    let query = supabase
+      .from('tickets_demo')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const porEstado = agruparPor(ticketsConCliente, 'estado');
-    const porTipologia = agruparPor(ticketsConCliente, 'tipologia');
-    const porCliente = agruparPor(ticketsConCliente, 'cliente_nombre');
+    query = aplicarFiltros(query, filtros);
 
-    const recientes = ticketsConCliente.slice(0, 5).map((ticket) => ({
-      ticket_numero: ticket.ticket_numero,
-      estado: ticket.estado,
-      tipologia: ticket.tipologia,
-      bpi: ticket.bpi,
-      cliente_nombre: ticket.cliente_nombre,
-      created_at: ticket.created_at
-    }));
+    const { data: tickets, error } = await query;
 
-    const clientesConTickets = new Set(ticketsConCliente.map((t) => t.cliente_id)).size;
+    if (error) {
+      return res.status(500).json({
+        error: 'Error obteniendo reportes',
+        detalle: error.message
+      });
+    }
+
+    const ticketsEnriquecidos = await enriquecerTickets(tickets || []);
+    const total = ticketsEnriquecidos.length;
+    const abiertos = ticketsEnriquecidos.filter((t) => t.estado !== 'Cerrado').length;
+    const cerrados = ticketsEnriquecidos.filter((t) => t.estado === 'Cerrado').length;
+    const clientesConTickets = new Set(
+      ticketsEnriquecidos.map((t) => t.cliente_id).filter(Boolean)
+    ).size;
+
+    const agrupar = (items, campo, etiquetaFn = null) => {
+      const mapa = {};
+
+      items.forEach((item) => {
+        const clave = item[campo] ?? 'Sin dato';
+        const nombre = etiquetaFn ? etiquetaFn(item, clave) : String(clave);
+
+        if (!mapa[nombre]) {
+          mapa[nombre] = 0;
+        }
+
+        mapa[nombre] += 1;
+      });
+
+      return Object.entries(mapa)
+        .map(([nombre, totalGrupo]) => ({
+          nombre,
+          total: totalGrupo
+        }))
+        .sort((a, b) => b.total - a.total);
+    };
+
+    const por_estado = agrupar(ticketsEnriquecidos, 'estado');
+    const por_tipologia = agrupar(ticketsEnriquecidos, 'tipologia');
+    const por_cliente = agrupar(
+      ticketsEnriquecidos,
+      'cliente_id',
+      (item) => item.cliente_nombre || `Cliente ${item.cliente_id || ''}`
+    );
+
+    const recientes = [...ticketsEnriquecidos]
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      .slice(0, 10);
 
     return res.status(200).json({
       ok: true,
       resumen: {
-        total_tickets: totalTickets,
+        total_tickets: total,
         abiertos,
         cerrados,
         clientes_con_tickets: clientesConTickets
       },
-      por_estado: porEstado,
-      por_tipologia: porTipologia,
-      por_cliente: porCliente,
+      por_estado,
+      por_tipologia,
+      por_cliente,
       recientes
     });
   } catch (error) {
     return res.status(500).json({
-      error: 'Error interno',
+      error: 'Error interno en reportes',
       detalle: error.message
     });
   }
