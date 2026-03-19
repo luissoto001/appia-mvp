@@ -37,6 +37,8 @@
     display: flex;
     align-items: center;
     gap: 16px;
+    justify-content: space-between;
+    flex-wrap: wrap;
   }
   
   .brand-mark {
@@ -50,6 +52,7 @@
     justify-content: center;
     font-size: 28px;
     font-weight: 700;
+    flex-shrink: 0;
   }
   
   .brand h1 {
@@ -73,6 +76,7 @@
     border-radius: 18px;
     box-shadow: var(--sombra-card);
     padding: 24px;
+    margin-bottom: 24px;
   }
   
   .card h2 {
@@ -136,6 +140,8 @@
     border-radius: 14px;
     background: #F8FAFC;
     border: 1px solid var(--color-borde);
+    white-space: pre-wrap;
+    word-break: break-word;
   }
   
   .resultado h3 {
@@ -148,7 +154,7 @@
   }
   
   .oculto {
-    display: none;
+    display: none !important;
   }
   
   .estado-ok {
@@ -172,22 +178,6 @@
     line-height: 1.5;
   }
   
-  @media (max-width: 640px) {
-    .brand h1 {
-      font-size: 22px;
-    }
-  
-    .card {
-      padding: 18px;
-    }
-  
-    .form input,
-    .form select,
-    .form textarea,
-    .form button {
-      font-size: 15px;
-    }
-  }
   .acciones-grid {
     display: grid;
     gap: 16px;
@@ -214,6 +204,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 16px;
+    flex-wrap: wrap;
   }
   
   .btn-secundario {
@@ -222,7 +213,14 @@
     background: var(--color-blanco);
     border-radius: 10px;
     cursor: pointer;
+    color: var(--color-primario);
+    font-weight: 600;
   }
+  
+  .btn-secundario:hover {
+    background: #EFF4FA;
+  }
+  
   .cliente-box {
     margin: 16px 0 20px;
     padding: 14px 16px;
@@ -231,4 +229,30 @@
     background: #F8FAFC;
     display: grid;
     gap: 6px;
+  }
+  
+  @media (max-width: 640px) {
+    .brand {
+      align-items: flex-start;
+    }
+  
+    .brand h1 {
+      font-size: 22px;
+    }
+  
+    .card {
+      padding: 18px;
+    }
+  
+    .form input,
+    .form select,
+    .form textarea,
+    .form button,
+    .accion-btn {
+      font-size: 15px;
+    }
+  
+    .btn-secundario {
+      width: 100%;
+    }
   }
