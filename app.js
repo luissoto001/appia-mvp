@@ -6,6 +6,7 @@ const loginResultado = document.getElementById('loginResultado');
 const loginContainer = document.getElementById('loginContainer');
 const appContainer = document.getElementById('appContainer');
 const usuarioInfo = document.getElementById('usuarioInfo');
+const btnCerrarSesion = document.getElementById('btnCerrarSesion');
 
 // elementos vistas
 const menuPrincipal = document.getElementById('menuPrincipal');
@@ -24,15 +25,18 @@ const clienteRutCreacion = document.getElementById('clienteRutCreacion');
 document.getElementById('btnMostrarConsulta').onclick = () => {
   menuPrincipal.classList.add('oculto');
   seccionConsulta.classList.remove('oculto');
+  seccionCreacion.classList.add('oculto');
 };
 
 document.getElementById('btnMostrarCreacion').onclick = () => {
   menuPrincipal.classList.add('oculto');
+  seccionConsulta.classList.add('oculto');
   seccionCreacion.classList.remove('oculto');
 };
 
 document.getElementById('btnVolverConsulta').onclick = volverMenu;
 document.getElementById('btnVolverCreacion').onclick = volverMenu;
+btnCerrarSesion.onclick = cerrarSesion;
 
 // formularios
 const consultaForm = document.getElementById('consultaForm');
@@ -45,6 +49,26 @@ function volverMenu() {
   seccionConsulta.classList.add('oculto');
   seccionCreacion.classList.add('oculto');
   menuPrincipal.classList.remove('oculto');
+}
+
+function guardarSesion(data) {
+  localStorage.setItem('appia_session', JSON.stringify(data));
+}
+
+function leerSesion() {
+  const raw = localStorage.getItem('appia_session');
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    localStorage.removeItem('appia_session');
+    return null;
+  }
+}
+
+function limpiarSesion() {
+  localStorage.removeItem('appia_session');
 }
 
 function cargarDatosClienteEnPantalla() {
@@ -62,6 +86,50 @@ function cargarDatosClienteEnPantalla() {
   clienteNombreCreacion.innerText = nombre;
   clienteRutCreacion.innerText = rut;
 }
+
+function mostrarAplicacion() {
+  loginContainer.classList.add('oculto');
+  appContainer.classList.remove('oculto');
+  volverMenu();
+
+  usuarioInfo.innerText =
+    `${session.usuario.nombre_usuario} - ${session.cliente.nombre_empresa} - ${session.cliente.rut_empresa}`;
+
+  cargarDatosClienteEnPantalla();
+}
+
+function mostrarLogin() {
+  appContainer.classList.add('oculto');
+  loginContainer.classList.remove('oculto');
+
+  loginForm.reset();
+  loginResultado.classList.add('oculto');
+  loginResultado.innerHTML = '';
+
+  resultadoConsulta.classList.add('oculto');
+  resultadoConsulta.innerHTML = '';
+
+  resultadoCreacion.classList.add('oculto');
+  resultadoCreacion.innerHTML = '';
+}
+
+function cerrarSesion() {
+  session = null;
+  limpiarSesion();
+  mostrarLogin();
+}
+
+// restaurar sesión al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  const sesionGuardada = leerSesion();
+
+  if (sesionGuardada?.usuario && sesionGuardada?.cliente) {
+    session = sesionGuardada;
+    mostrarAplicacion();
+  } else {
+    mostrarLogin();
+  }
+});
 
 // LOGIN
 loginForm.addEventListener('submit', async (e) => {
@@ -90,12 +158,8 @@ loginForm.addEventListener('submit', async (e) => {
     }
 
     session = data;
-
-    loginContainer.classList.add('oculto');
-    appContainer.classList.remove('oculto');
-
-    usuarioInfo.innerText = `${data.usuario.nombre_usuario} - ${data.cliente.nombre_empresa} - ${data.cliente.rut_empresa}`;
-    cargarDatosClienteEnPantalla();
+    guardarSesion(data);
+    mostrarAplicacion();
   } catch (error) {
     loginResultado.classList.add('estado-error');
     loginResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
