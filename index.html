@@ -152,7 +152,11 @@
             <div class="admin-grid">
               <div class="card-interno">
                 <h3>Reglas existentes</h3>
-                <div id="listaReglas" class="lista-reglas"></div>
+                <div class="panel-helper">Busca una regla por estado, área o tipología.</div>
+                <div class="admin-search">
+                  <input id="buscarReglas" placeholder="Buscar regla...">
+                </div>
+                <div id="listaReglas" class="lista-reglas list-scroll"></div>
 
                 <hr>
 
@@ -239,34 +243,41 @@
 
           <div id="adminClientesPanel" class="oculto">
             <div class="admin-grid">
-              <div class="card-interno">
-                <h3>Clientes existentes</h3>
-                <div id="listaClientes" class="lista-reglas"></div>
+              <div class="card-interno admin-stack">
+                <div>
+                  <h3>Clientes existentes</h3>
+                  <div class="panel-helper">Usa el buscador para filtrar por empresa o RUT.</div>
+                  <div class="admin-search">
+                    <input id="buscarClientes" placeholder="Buscar cliente...">
+                  </div>
+                  <div id="listaClientes" class="lista-reglas list-scroll"></div>
+                </div>
 
-                <hr>
+                <div>
+                  <hr>
+                  <h3>Nuevo cliente</h3>
+                  <form id="formNuevoCliente" class="form">
+                    <label for="nuevo_cliente_nombre">Nombre empresa</label>
+                    <input id="nuevo_cliente_nombre" required>
 
-                <h3>Nuevo cliente</h3>
-                <form id="formNuevoCliente" class="form">
-                  <label for="nuevo_cliente_nombre">Nombre empresa</label>
-                  <input id="nuevo_cliente_nombre" required>
+                    <label for="nuevo_cliente_rut">RUT</label>
+                    <input id="nuevo_cliente_rut" required>
 
-                  <label for="nuevo_cliente_rut">RUT</label>
-                  <input id="nuevo_cliente_rut" required>
+                    <label class="check-line">
+                      <input type="checkbox" id="nuevo_cliente_activo" checked>
+                      Cliente activo
+                    </label>
 
-                  <label class="check-line">
-                    <input type="checkbox" id="nuevo_cliente_activo" checked>
-                    Cliente activo
-                  </label>
+                    <label class="check-line">
+                      <input type="checkbox" id="nuevo_cliente_enlistado" checked>
+                      Cliente enlistado
+                    </label>
 
-                  <label class="check-line">
-                    <input type="checkbox" id="nuevo_cliente_enlistado" checked>
-                    Cliente enlistado
-                  </label>
+                    <button type="submit">Crear cliente</button>
+                  </form>
 
-                  <button type="submit">Crear cliente</button>
-                </form>
-
-                <div id="adminNuevoClienteResultado" class="resultado oculto"></div>
+                  <div id="adminNuevoClienteResultado" class="resultado oculto"></div>
+                </div>
               </div>
 
               <div class="card-interno">
@@ -300,7 +311,11 @@
                 <hr>
 
                 <h3>BPI / Servicios del cliente seleccionado</h3>
-                <div id="listaServiciosCliente" class="lista-reglas"></div>
+                <div class="panel-helper">Filtra servicios por BPI, nombre o dirección.</div>
+                <div class="admin-search">
+                  <input id="buscarServicios" placeholder="Buscar servicio/BPI...">
+                </div>
+                <div id="listaServiciosCliente" class="lista-reglas list-scroll"></div>
 
                 <form id="formNuevoServicio" class="form oculto">
                   <label for="nuevo_servicio_bpi">BPI</label>
@@ -350,41 +365,48 @@
 
           <div id="adminUsuariosPanel" class="oculto">
             <div class="admin-grid">
-              <div class="card-interno">
-                <h3>Usuarios existentes</h3>
-                <div id="listaUsuarios" class="lista-reglas"></div>
+              <div class="card-interno admin-stack">
+                <div>
+                  <h3>Usuarios existentes</h3>
+                  <div class="panel-helper">Busca por nombre, email o rol.</div>
+                  <div class="admin-search">
+                    <input id="buscarUsuarios" placeholder="Buscar usuario...">
+                  </div>
+                  <div id="listaUsuarios" class="lista-reglas list-scroll"></div>
+                </div>
 
-                <hr>
+                <div>
+                  <hr>
+                  <h3>Nuevo usuario</h3>
+                  <form id="formNuevoUsuario" class="form">
+                    <label for="nuevo_usuario_cliente">Cliente</label>
+                    <select id="nuevo_usuario_cliente" required></select>
 
-                <h3>Nuevo usuario</h3>
-                <form id="formNuevoUsuario" class="form">
-                  <label for="nuevo_usuario_cliente">Cliente</label>
-                  <select id="nuevo_usuario_cliente" required></select>
+                    <label for="nuevo_usuario_nombre">Nombre usuario</label>
+                    <input id="nuevo_usuario_nombre" required>
 
-                  <label for="nuevo_usuario_nombre">Nombre usuario</label>
-                  <input id="nuevo_usuario_nombre" required>
+                    <label for="nuevo_usuario_email">Email</label>
+                    <input id="nuevo_usuario_email" type="email" required>
 
-                  <label for="nuevo_usuario_email">Email</label>
-                  <input id="nuevo_usuario_email" type="email" required>
+                    <label for="nuevo_usuario_password">Contraseña</label>
+                    <input id="nuevo_usuario_password" required>
 
-                  <label for="nuevo_usuario_password">Contraseña</label>
-                  <input id="nuevo_usuario_password" required>
+                    <label for="nuevo_usuario_rol">Rol</label>
+                    <select id="nuevo_usuario_rol" required>
+                      <option value="cliente">cliente</option>
+                      <option value="admin">admin</option>
+                    </select>
 
-                  <label for="nuevo_usuario_rol">Rol</label>
-                  <select id="nuevo_usuario_rol" required>
-                    <option value="cliente">cliente</option>
-                    <option value="admin">admin</option>
-                  </select>
+                    <label class="check-line">
+                      <input type="checkbox" id="nuevo_usuario_activo" checked>
+                      Usuario activo
+                    </label>
 
-                  <label class="check-line">
-                    <input type="checkbox" id="nuevo_usuario_activo" checked>
-                    Usuario activo
-                  </label>
+                    <button type="submit">Crear usuario</button>
+                  </form>
 
-                  <button type="submit">Crear usuario</button>
-                </form>
-
-                <div id="adminNuevoUsuarioResultado" class="resultado oculto"></div>
+                  <div id="adminNuevoUsuarioResultado" class="resultado oculto"></div>
+                </div>
               </div>
 
               <div class="card-interno">
@@ -469,7 +491,7 @@
                 <button class="btn-secundario oculto" id="btnCerrarDetalleReportes" type="button">Cerrar detalle</button>
               </div>
               <div id="detalleReportesVacio" class="intro">Haz clic en un KPI o barra para ver el detalle de tickets.</div>
-              <div id="detalleReportesLista"></div>
+              <div id="detalleReportesLista" class="detalle-reportes-scroll"></div>
             </div>
 
             <div id="adminReporteResultado" class="resultado oculto"></div>

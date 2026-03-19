@@ -51,6 +51,12 @@ const adminClientesPanel = document.getElementById('adminClientesPanel');
 const adminUsuariosPanel = document.getElementById('adminUsuariosPanel');
 const adminReportesPanel = document.getElementById('adminReportesPanel');
 
+// Buscadores admin
+const buscarReglas = document.getElementById('buscarReglas');
+const buscarClientes = document.getElementById('buscarClientes');
+const buscarServicios = document.getElementById('buscarServicios');
+const buscarUsuarios = document.getElementById('buscarUsuarios');
+
 // Reglas
 const listaReglas = document.getElementById('listaReglas');
 const formNuevaRegla = document.getElementById('formNuevaRegla');
@@ -160,6 +166,12 @@ const kpiCardCerrados = document.getElementById('kpiCardCerrados');
 
 let clienteSeleccionadoId = null;
 
+// cachés para búsqueda local
+let reglasCache = [];
+let clientesCache = [];
+let serviciosCache = [];
+let usuariosCache = [];
+
 // Navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
   ocultarTodasLasSecciones();
@@ -211,6 +223,11 @@ btnCerrarDetalleReportes.onclick = limpiarDetalleReportes;
 kpiCardTotal.onclick = () => cargarDetalleReportes('todos');
 kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
 kpiCardCerrados.onclick = () => cargarDetalleReportes('cerrados');
+
+buscarReglas.addEventListener('input', () => renderReglas(reglasCache));
+buscarClientes.addEventListener('input', () => renderClientes(clientesCache));
+buscarServicios.addEventListener('input', () => renderServicios(serviciosCache));
+buscarUsuarios.addEventListener('input', () => renderUsuarios(usuariosCache));
 
 function ocultarTodasLasSecciones() {
   menuPrincipal.classList.add('oculto');
@@ -330,6 +347,17 @@ function setResultado(elemento, tipo, html) {
   elemento.classList.remove('oculto', 'estado-ok', 'estado-error');
   if (tipo) elemento.classList.add(tipo);
   elemento.innerHTML = html;
+}
+
+function normalizarTexto(valor) {
+  return String(valor || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function coincideBusqueda(textoBase, textoBusqueda) {
+  return normalizarTexto(textoBase).includes(normalizarTexto(textoBusqueda));
 }
 
 function actualizarModoConsulta() {
@@ -604,6 +632,178 @@ async function cargarDetalleReportes(filtro, valor = '') {
   }
 }
 
+// RENDER helpers admin
+function renderReglas(reglas) {
+  const filtro = buscarReglas.value.trim();
+
+  const filtradas = !filtro
+    ? reglas
+    : reglas.filter((regla) =>
+        coincideBusqueda(
+          `${regla.estado_ticket} ${regla.area_resolutora} ${regla.tipologia} ${regla.canal} ${regla.mensaje}`,
+          filtro
+        )
+      );
+
+  if (!filtradas.length) {
+    listaReglas.innerHTML = '<p>No hay reglas que coincidan con la búsqueda.</p>';
+    return;
+  }
+
+  listaReglas.innerHTML = filtradas.map((regla) => `
+    <button type="button" class="regla-item" data-id="${regla.id}">
+      <strong>#${regla.id}</strong> - ${regla.estado_ticket}
+      <small>${regla.area_resolutora} | ${regla.tipologia} | ${regla.horas_minimas}-${regla.horas_maximas} hrs | prioridad ${regla.prioridad} | ${regla.activo ? 'Activa' : 'Inactiva'}</small>
+    </button>
+  `).join('');
+
+  document.querySelectorAll('.regla-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const regla = reglasCache.find((r) => r.id === Number(btn.dataset.id));
+      if (!regla) return;
+
+      reglaId.value = regla.id;
+      reglaCanal.value = regla.canal || '';
+      reglaEstado.value = regla.estado_ticket || '';
+      reglaArea.value = regla.area_resolutora || '';
+      reglaTipologia.value = regla.tipologia || '';
+      reglaHorasMin.value = regla.horas_minimas ?? 0;
+      reglaHorasMax.value = regla.horas_maximas ?? 0;
+      reglaPrioridad.value = regla.prioridad ?? 1;
+      reglaMensaje.value = regla.mensaje || '';
+      reglaActivo.checked = !!regla.activo;
+
+      textoSinSeleccion.classList.add('oculto');
+      formEditarRegla.classList.remove('oculto');
+    });
+  });
+}
+
+function renderClientes(clientes) {
+  const filtro = buscarClientes.value.trim();
+
+  const filtrados = !filtro
+    ? clientes
+    : clientes.filter((cliente) =>
+        coincideBusqueda(`${cliente.nombre_empresa} ${cliente.rut_empresa}`, filtro)
+      );
+
+  if (!filtrados.length) {
+    listaClientes.innerHTML = '<p>No hay clientes que coincidan con la búsqueda.</p>';
+    return;
+  }
+
+  listaClientes.innerHTML = filtrados.map((cliente) => `
+    <button type="button" class="regla-item cliente-item" data-id="${cliente.id}">
+      <strong>#${cliente.id}</strong> - ${cliente.nombre_empresa}
+      <small>${cliente.rut_empresa} | ${cliente.activo ? 'Activo' : 'Inactivo'} | ${cliente.enlistado ? 'Enlistado' : 'No enlistado'}</small>
+    </button>
+  `).join('');
+
+  document.querySelectorAll('.cliente-item').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const cliente = clientesCache.find((c) => c.id === Number(btn.dataset.id));
+      if (!cliente) return;
+
+      clienteSeleccionadoId = cliente.id;
+      clienteIdAdmin.value = cliente.id;
+      clienteNombreAdmin.value = cliente.nombre_empresa || '';
+      clienteRutAdmin.value = cliente.rut_empresa || '';
+      clienteActivoAdmin.checked = !!cliente.activo;
+      clienteEnlistadoAdmin.checked = !!cliente.enlistado;
+
+      textoSinClienteSeleccionado.classList.add('oculto');
+      formEditarCliente.classList.remove('oculto');
+      formNuevoServicio.classList.remove('oculto');
+
+      await cargarServiciosCliente(cliente.id);
+    });
+  });
+}
+
+function renderServicios(servicios) {
+  const filtro = buscarServicios.value.trim();
+
+  const filtrados = !filtro
+    ? servicios
+    : servicios.filter((servicio) =>
+        coincideBusqueda(
+          `${servicio.bpi} ${servicio.nombre_servicio} ${servicio.direccion}`,
+          filtro
+        )
+      );
+
+  if (!filtrados.length) {
+    listaServiciosCliente.innerHTML = '<p>No hay servicios que coincidan con la búsqueda.</p>';
+    return;
+  }
+
+  listaServiciosCliente.innerHTML = filtrados.map((servicio) => `
+    <button type="button" class="regla-item servicio-item" data-id="${servicio.id}">
+      <strong>${servicio.bpi}</strong> - ${servicio.nombre_servicio}
+      <small>${servicio.direccion || 'Sin dirección'} | ${servicio.activo ? 'Activo' : 'Inactivo'}</small>
+    </button>
+  `).join('');
+
+  document.querySelectorAll('.servicio-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const servicio = serviciosCache.find((s) => s.id === Number(btn.dataset.id));
+      if (!servicio) return;
+
+      servicioIdAdmin.value = servicio.id;
+      servicioBpiAdmin.value = servicio.bpi || '';
+      servicioNombreAdmin.value = servicio.nombre_servicio || '';
+      servicioDireccionAdmin.value = servicio.direccion || '';
+      servicioActivoAdmin.checked = !!servicio.activo;
+
+      textoSinServicioSeleccionado.classList.add('oculto');
+      formEditarServicio.classList.remove('oculto');
+    });
+  });
+}
+
+function renderUsuarios(usuarios) {
+  const filtro = buscarUsuarios.value.trim();
+
+  const filtrados = !filtro
+    ? usuarios
+    : usuarios.filter((usuario) =>
+        coincideBusqueda(
+          `${usuario.nombre_usuario} ${usuario.email} ${usuario.rol}`,
+          filtro
+        )
+      );
+
+  if (!filtrados.length) {
+    listaUsuarios.innerHTML = '<p>No hay usuarios que coincidan con la búsqueda.</p>';
+    return;
+  }
+
+  listaUsuarios.innerHTML = filtrados.map((usuario) => `
+    <button type="button" class="regla-item usuario-item" data-id="${usuario.id}">
+      <strong>#${usuario.id}</strong> - ${usuario.nombre_usuario}
+      <small>${usuario.email} | ${usuario.rol} | ${usuario.activo ? 'Activo' : 'Inactivo'}</small>
+    </button>
+  `).join('');
+
+  document.querySelectorAll('.usuario-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const usuario = usuariosCache.find((u) => u.id === Number(btn.dataset.id));
+      if (!usuario) return;
+
+      usuarioIdAdmin.value = usuario.id;
+      usuarioNombreAdmin.value = usuario.nombre_usuario || '';
+      usuarioEmailAdmin.value = usuario.email || '';
+      usuarioRolAdmin.value = usuario.rol || '';
+      usuarioPasswordAdmin.value = '';
+      usuarioActivoAdmin.checked = !!usuario.activo;
+
+      textoSinUsuarioSeleccionado.classList.add('oculto');
+      formEditarUsuario.classList.remove('oculto');
+    });
+  });
+}
+
 // LOGIN
 document.addEventListener('DOMContentLoaded', () => {
   const sesionGuardada = leerSesion();
@@ -763,39 +963,8 @@ async function cargarReglasAdmin() {
       return;
     }
 
-    if (!data.reglas?.length) {
-      listaReglas.innerHTML = '<p>No hay reglas registradas.</p>';
-      return;
-    }
-
-    listaReglas.innerHTML = data.reglas.map((regla) => `
-      <button type="button" class="regla-item" data-id="${regla.id}">
-        <strong>#${regla.id}</strong> - ${regla.estado_ticket}
-        <br>
-        <small>${regla.area_resolutora} | ${regla.tipologia} | ${regla.horas_minimas}-${regla.horas_maximas} hrs | prioridad ${regla.prioridad} | ${regla.activo ? 'Activa' : 'Inactiva'}</small>
-      </button>
-    `).join('');
-
-    document.querySelectorAll('.regla-item').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const regla = data.reglas.find((r) => r.id === Number(btn.dataset.id));
-        if (!regla) return;
-
-        reglaId.value = regla.id;
-        reglaCanal.value = regla.canal || '';
-        reglaEstado.value = regla.estado_ticket || '';
-        reglaArea.value = regla.area_resolutora || '';
-        reglaTipologia.value = regla.tipologia || '';
-        reglaHorasMin.value = regla.horas_minimas ?? 0;
-        reglaHorasMax.value = regla.horas_maximas ?? 0;
-        reglaPrioridad.value = regla.prioridad ?? 1;
-        reglaMensaje.value = regla.mensaje || '';
-        reglaActivo.checked = !!regla.activo;
-
-        textoSinSeleccion.classList.add('oculto');
-        formEditarRegla.classList.remove('oculto');
-      });
-    });
+    reglasCache = data.reglas || [];
+    renderReglas(reglasCache);
   } catch (error) {
     listaReglas.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -894,38 +1063,8 @@ async function cargarClientesAdmin() {
       return;
     }
 
-    if (!data.clientes?.length) {
-      listaClientes.innerHTML = '<p>No hay clientes registrados.</p>';
-      return;
-    }
-
-    listaClientes.innerHTML = data.clientes.map((cliente) => `
-      <button type="button" class="regla-item cliente-item" data-id="${cliente.id}">
-        <strong>#${cliente.id}</strong> - ${cliente.nombre_empresa}
-        <br>
-        <small>${cliente.rut_empresa} | ${cliente.activo ? 'Activo' : 'Inactivo'} | ${cliente.enlistado ? 'Enlistado' : 'No enlistado'}</small>
-      </button>
-    `).join('');
-
-    document.querySelectorAll('.cliente-item').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        const cliente = data.clientes.find((c) => c.id === Number(btn.dataset.id));
-        if (!cliente) return;
-
-        clienteSeleccionadoId = cliente.id;
-        clienteIdAdmin.value = cliente.id;
-        clienteNombreAdmin.value = cliente.nombre_empresa || '';
-        clienteRutAdmin.value = cliente.rut_empresa || '';
-        clienteActivoAdmin.checked = !!cliente.activo;
-        clienteEnlistadoAdmin.checked = !!cliente.enlistado;
-
-        textoSinClienteSeleccionado.classList.add('oculto');
-        formEditarCliente.classList.remove('oculto');
-        formNuevoServicio.classList.remove('oculto');
-
-        await cargarServiciosCliente(cliente.id);
-      });
-    });
+    clientesCache = data.clientes || [];
+    renderClientes(clientesCache);
   } catch (error) {
     listaClientes.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -1026,34 +1165,8 @@ async function cargarServiciosCliente(clienteId) {
       return;
     }
 
-    if (!data.servicios?.length) {
-      listaServiciosCliente.innerHTML = '<p>Este cliente aún no tiene servicios/BPI.</p>';
-      return;
-    }
-
-    listaServiciosCliente.innerHTML = data.servicios.map((servicio) => `
-      <button type="button" class="regla-item servicio-item" data-id="${servicio.id}">
-        <strong>${servicio.bpi}</strong> - ${servicio.nombre_servicio}
-        <br>
-        <small>${servicio.direccion || 'Sin dirección'} | ${servicio.activo ? 'Activo' : 'Inactivo'}</small>
-      </button>
-    `).join('');
-
-    document.querySelectorAll('.servicio-item').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const servicio = data.servicios.find((s) => s.id === Number(btn.dataset.id));
-        if (!servicio) return;
-
-        servicioIdAdmin.value = servicio.id;
-        servicioBpiAdmin.value = servicio.bpi || '';
-        servicioNombreAdmin.value = servicio.nombre_servicio || '';
-        servicioDireccionAdmin.value = servicio.direccion || '';
-        servicioActivoAdmin.checked = !!servicio.activo;
-
-        textoSinServicioSeleccionado.classList.add('oculto');
-        formEditarServicio.classList.remove('oculto');
-      });
-    });
+    serviciosCache = data.servicios || [];
+    renderServicios(serviciosCache);
   } catch (error) {
     listaServiciosCliente.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -1167,35 +1280,8 @@ async function cargarUsuariosAdmin() {
       return;
     }
 
-    if (!data.usuarios?.length) {
-      listaUsuarios.innerHTML = '<p>No hay usuarios registrados.</p>';
-      return;
-    }
-
-    listaUsuarios.innerHTML = data.usuarios.map((usuario) => `
-      <button type="button" class="regla-item usuario-item" data-id="${usuario.id}">
-        <strong>#${usuario.id}</strong> - ${usuario.nombre_usuario}
-        <br>
-        <small>${usuario.email} | ${usuario.rol} | ${usuario.activo ? 'Activo' : 'Inactivo'}</small>
-      </button>
-    `).join('');
-
-    document.querySelectorAll('.usuario-item').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const usuario = data.usuarios.find((u) => u.id === Number(btn.dataset.id));
-        if (!usuario) return;
-
-        usuarioIdAdmin.value = usuario.id;
-        usuarioNombreAdmin.value = usuario.nombre_usuario || '';
-        usuarioEmailAdmin.value = usuario.email || '';
-        usuarioRolAdmin.value = usuario.rol || '';
-        usuarioPasswordAdmin.value = '';
-        usuarioActivoAdmin.checked = !!usuario.activo;
-
-        textoSinUsuarioSeleccionado.classList.add('oculto');
-        formEditarUsuario.classList.remove('oculto');
-      });
-    });
+    usuariosCache = data.usuarios || [];
+    renderUsuarios(usuariosCache);
   } catch (error) {
     listaUsuarios.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
