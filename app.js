@@ -23,7 +23,7 @@ const clienteRutConsulta = document.getElementById('clienteRutConsulta');
 const clienteNombreCreacion = document.getElementById('clienteNombreCreacion');
 const clienteRutCreacion = document.getElementById('clienteRutCreacion');
 
-// admin base
+// admin
 const btnMostrarAdmin = document.getElementById('btnMostrarAdmin');
 const adminNombre = document.getElementById('adminNombre');
 const adminEmail = document.getElementById('adminEmail');
@@ -128,6 +128,7 @@ function guardarSesion(data) {
 function leerSesion() {
   const raw = localStorage.getItem('appia_session');
   if (!raw) return null;
+
   try {
     return JSON.parse(raw);
   } catch {
