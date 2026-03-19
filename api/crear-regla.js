@@ -9,7 +9,6 @@ export default async function handler(req, res) {
     }
 
     const {
-      id,
       activo,
       canal,
       estado_ticket,
@@ -22,7 +21,6 @@ export default async function handler(req, res) {
     } = req.body || {};
 
     if (
-      !id ||
       typeof activo !== 'boolean' ||
       !canal ||
       !estado_ticket ||
@@ -34,38 +32,39 @@ export default async function handler(req, res) {
       !mensaje
     ) {
       return res.status(400).json({
-        error: 'Datos inválidos para actualizar la regla'
+        error: 'Datos inválidos para crear la regla'
       });
     }
 
     const { data, error } = await supabase
       .from('reglas_respuesta')
-      .update({
-        activo,
-        canal,
-        estado_ticket,
-        area_resolutora,
-        horas_minimas: Number(horas_minimas),
-        horas_maximas: Number(horas_maximas),
-        tipologia,
-        prioridad: Number(prioridad),
-        mensaje
-      })
-      .eq('id', Number(id))
+      .insert([
+        {
+          activo,
+          canal,
+          estado_ticket,
+          area_resolutora,
+          horas_minimas: Number(horas_minimas),
+          horas_maximas: Number(horas_maximas),
+          tipologia,
+          prioridad: Number(prioridad),
+          mensaje
+        }
+      ])
       .select()
       .single();
 
     if (error) {
       return res.status(500).json({
-        error: 'Error actualizando regla',
+        error: 'Error creando regla',
         detalle: error.message
       });
     }
 
-    return res.status(200).json({
+    return res.status(201).json({
       ok: true,
       regla: data,
-      mensaje: 'Regla actualizada correctamente'
+      mensaje: 'Regla creada correctamente'
     });
   } catch (error) {
     return res.status(500).json({

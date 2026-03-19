@@ -137,6 +137,44 @@
               <div class="card-interno">
                 <h3>Reglas existentes</h3>
                 <div id="listaReglas" class="lista-reglas"></div>
+
+                <hr>
+
+                <h3>Nueva regla</h3>
+                <form id="formNuevaRegla" class="form">
+                  <label for="nueva_regla_canal">Canal</label>
+                  <input id="nueva_regla_canal" value="web" required>
+
+                  <label for="nueva_regla_estado">Estado ticket</label>
+                  <input id="nueva_regla_estado" required>
+
+                  <label for="nueva_regla_area">Área resolutora</label>
+                  <input id="nueva_regla_area" required>
+
+                  <label for="nueva_regla_tipologia">Tipología</label>
+                  <input id="nueva_regla_tipologia" required>
+
+                  <label for="nueva_regla_horas_min">Horas mínimas</label>
+                  <input id="nueva_regla_horas_min" type="number" min="0" required>
+
+                  <label for="nueva_regla_horas_max">Horas máximas</label>
+                  <input id="nueva_regla_horas_max" type="number" min="0" required>
+
+                  <label for="nueva_regla_prioridad">Prioridad</label>
+                  <input id="nueva_regla_prioridad" type="number" min="1" value="1" required>
+
+                  <label for="nueva_regla_mensaje">Mensaje</label>
+                  <textarea id="nueva_regla_mensaje" rows="6" required></textarea>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nueva_regla_activo" checked>
+                    Regla activa
+                  </label>
+
+                  <button type="submit">Crear regla</button>
+                </form>
+
+                <div id="adminNuevaReglaResultado" class="resultado oculto"></div>
               </div>
 
               <div class="card-interno">
@@ -145,20 +183,29 @@
                 <form id="formEditarRegla" class="form oculto">
                   <input type="hidden" id="regla_id">
 
+                  <label for="regla_canal">Canal</label>
+                  <input id="regla_canal" required>
+
                   <label for="regla_estado">Estado</label>
-                  <input id="regla_estado" disabled>
+                  <input id="regla_estado" required>
 
                   <label for="regla_area">Área resolutora</label>
-                  <input id="regla_area" disabled>
+                  <input id="regla_area" required>
 
                   <label for="regla_tipologia">Tipología</label>
-                  <input id="regla_tipologia" disabled>
+                  <input id="regla_tipologia" required>
 
-                  <label for="regla_horas">Rango de horas</label>
-                  <input id="regla_horas" disabled>
+                  <label for="regla_horas_min">Horas mínimas</label>
+                  <input id="regla_horas_min" type="number" min="0" required>
+
+                  <label for="regla_horas_max">Horas máximas</label>
+                  <input id="regla_horas_max" type="number" min="0" required>
+
+                  <label for="regla_prioridad">Prioridad</label>
+                  <input id="regla_prioridad" type="number" min="1" required>
 
                   <label for="regla_mensaje">Mensaje</label>
-                  <textarea id="regla_mensaje" rows="6"></textarea>
+                  <textarea id="regla_mensaje" rows="6" required></textarea>
 
                   <label class="check-line">
                     <input type="checkbox" id="regla_activo">
@@ -179,60 +226,11 @@
               <div class="card-interno">
                 <h3>Clientes existentes</h3>
                 <div id="listaClientes" class="lista-reglas"></div>
-
-                <hr>
-
-                <h3>Nuevo cliente</h3>
-                <form id="formNuevoCliente" class="form">
-                  <label for="nuevo_cliente_nombre">Nombre empresa</label>
-                  <input id="nuevo_cliente_nombre" required>
-
-                  <label for="nuevo_cliente_rut">RUT</label>
-                  <input id="nuevo_cliente_rut" required>
-
-                  <label class="check-line">
-                    <input type="checkbox" id="nuevo_cliente_activo" checked>
-                    Cliente activo
-                  </label>
-
-                  <label class="check-line">
-                    <input type="checkbox" id="nuevo_cliente_enlistado" checked>
-                    Cliente enlistado
-                  </label>
-
-                  <button type="submit">Crear cliente</button>
-                </form>
-
-                <div id="adminNuevoClienteResultado" class="resultado oculto"></div>
               </div>
 
               <div class="card-interno">
-                <h3>Editar cliente</h3>
-
-                <form id="formEditarCliente" class="form oculto">
-                  <input type="hidden" id="cliente_id_admin">
-
-                  <label for="cliente_nombre_admin">Nombre empresa</label>
-                  <input id="cliente_nombre_admin" disabled>
-
-                  <label for="cliente_rut_admin">RUT</label>
-                  <input id="cliente_rut_admin" disabled>
-
-                  <label class="check-line">
-                    <input type="checkbox" id="cliente_activo_admin">
-                    Cliente activo
-                  </label>
-
-                  <label class="check-line">
-                    <input type="checkbox" id="cliente_enlistado_admin">
-                    Cliente enlistado
-                  </label>
-
-                  <button type="submit">Guardar cambios</button>
-                </form>
-
-                <div id="adminClienteResultado" class="resultado oculto"></div>
-                <p id="textoSinClienteSeleccionado" class="intro">Selecciona un cliente para editarlo.</p>
+                <h3>Clientes</h3>
+                <p class="intro">La gestión de clientes sigue funcionando como antes.</p>
               </div>
             </div>
           </div>
@@ -242,68 +240,11 @@
               <div class="card-interno">
                 <h3>Usuarios existentes</h3>
                 <div id="listaUsuarios" class="lista-reglas"></div>
-
-                <hr>
-
-                <h3>Nuevo usuario</h3>
-                <form id="formNuevoUsuario" class="form">
-                  <label for="nuevo_usuario_cliente">Cliente</label>
-                  <select id="nuevo_usuario_cliente" required></select>
-
-                  <label for="nuevo_usuario_nombre">Nombre usuario</label>
-                  <input id="nuevo_usuario_nombre" required>
-
-                  <label for="nuevo_usuario_email">Email</label>
-                  <input id="nuevo_usuario_email" type="email" required>
-
-                  <label for="nuevo_usuario_password">Contraseña</label>
-                  <input id="nuevo_usuario_password" required>
-
-                  <label for="nuevo_usuario_rol">Rol</label>
-                  <select id="nuevo_usuario_rol" required>
-                    <option value="cliente">cliente</option>
-                    <option value="admin">admin</option>
-                  </select>
-
-                  <label class="check-line">
-                    <input type="checkbox" id="nuevo_usuario_activo" checked>
-                    Usuario activo
-                  </label>
-
-                  <button type="submit">Crear usuario</button>
-                </form>
-
-                <div id="adminNuevoUsuarioResultado" class="resultado oculto"></div>
               </div>
 
               <div class="card-interno">
-                <h3>Editar usuario</h3>
-
-                <form id="formEditarUsuario" class="form oculto">
-                  <input type="hidden" id="usuario_id_admin">
-
-                  <label for="usuario_nombre_admin">Nombre usuario</label>
-                  <input id="usuario_nombre_admin" disabled>
-
-                  <label for="usuario_email_admin">Email</label>
-                  <input id="usuario_email_admin" disabled>
-
-                  <label for="usuario_rol_admin">Rol</label>
-                  <input id="usuario_rol_admin" disabled>
-
-                  <label for="usuario_password_admin">Nueva contraseña</label>
-                  <input id="usuario_password_admin" type="text" placeholder="Ingresa nueva contraseña">
-
-                  <label class="check-line">
-                    <input type="checkbox" id="usuario_activo_admin">
-                    Usuario activo
-                  </label>
-
-                  <button type="submit">Guardar cambios</button>
-                </form>
-
-                <div id="adminUsuarioResultado" class="resultado oculto"></div>
-                <p id="textoSinUsuarioSeleccionado" class="intro">Selecciona un usuario para editarlo.</p>
+                <h3>Usuarios</h3>
+                <p class="intro">La gestión de usuarios sigue funcionando como antes.</p>
               </div>
             </div>
           </div>

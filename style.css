@@ -318,3 +318,8 @@
   .admin-tab-btn {
     min-width: 120px;
   }
+  hr {
+    border: none;
+    border-top: 1px solid var(--color-borde);
+    margin: 20px 0;
+  }

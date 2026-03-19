@@ -18,14 +18,12 @@ const seccionAdmin = document.getElementById('seccionAdmin');
 const clienteNombre = document.getElementById('clienteNombre');
 const clienteRut = document.getElementById('clienteRut');
 const clienteRol = document.getElementById('clienteRol');
-
 const clienteNombreConsulta = document.getElementById('clienteNombreConsulta');
 const clienteRutConsulta = document.getElementById('clienteRutConsulta');
-
 const clienteNombreCreacion = document.getElementById('clienteNombreCreacion');
 const clienteRutCreacion = document.getElementById('clienteRutCreacion');
 
-// admin
+// admin base
 const btnMostrarAdmin = document.getElementById('btnMostrarAdmin');
 const adminNombre = document.getElementById('adminNombre');
 const adminEmail = document.getElementById('adminEmail');
@@ -40,62 +38,42 @@ const adminMensajesPanel = document.getElementById('adminMensajesPanel');
 const adminClientesPanel = document.getElementById('adminClientesPanel');
 const adminUsuariosPanel = document.getElementById('adminUsuariosPanel');
 
-// reglas
+// mensajes
 const listaReglas = document.getElementById('listaReglas');
 const formEditarRegla = document.getElementById('formEditarRegla');
+const formNuevaRegla = document.getElementById('formNuevaRegla');
 const adminResultado = document.getElementById('adminResultado');
+const adminNuevaReglaResultado = document.getElementById('adminNuevaReglaResultado');
 const textoSinSeleccion = document.getElementById('textoSinSeleccion');
 
 const reglaId = document.getElementById('regla_id');
+const reglaCanal = document.getElementById('regla_canal');
 const reglaEstado = document.getElementById('regla_estado');
 const reglaArea = document.getElementById('regla_area');
 const reglaTipologia = document.getElementById('regla_tipologia');
-const reglaHoras = document.getElementById('regla_horas');
+const reglaHorasMin = document.getElementById('regla_horas_min');
+const reglaHorasMax = document.getElementById('regla_horas_max');
+const reglaPrioridad = document.getElementById('regla_prioridad');
 const reglaMensaje = document.getElementById('regla_mensaje');
 const reglaActivo = document.getElementById('regla_activo');
 
-// clientes
-const listaClientes = document.getElementById('listaClientes');
-const formEditarCliente = document.getElementById('formEditarCliente');
-const formNuevoCliente = document.getElementById('formNuevoCliente');
-const adminClienteResultado = document.getElementById('adminClienteResultado');
-const adminNuevoClienteResultado = document.getElementById('adminNuevoClienteResultado');
-const textoSinClienteSeleccionado = document.getElementById('textoSinClienteSeleccionado');
+const nuevaReglaCanal = document.getElementById('nueva_regla_canal');
+const nuevaReglaEstado = document.getElementById('nueva_regla_estado');
+const nuevaReglaArea = document.getElementById('nueva_regla_area');
+const nuevaReglaTipologia = document.getElementById('nueva_regla_tipologia');
+const nuevaReglaHorasMin = document.getElementById('nueva_regla_horas_min');
+const nuevaReglaHorasMax = document.getElementById('nueva_regla_horas_max');
+const nuevaReglaPrioridad = document.getElementById('nueva_regla_prioridad');
+const nuevaReglaMensaje = document.getElementById('nueva_regla_mensaje');
+const nuevaReglaActivo = document.getElementById('nueva_regla_activo');
 
-const clienteIdAdmin = document.getElementById('cliente_id_admin');
-const clienteNombreAdmin = document.getElementById('cliente_nombre_admin');
-const clienteRutAdmin = document.getElementById('cliente_rut_admin');
-const clienteActivoAdmin = document.getElementById('cliente_activo_admin');
-const clienteEnlistadoAdmin = document.getElementById('cliente_enlistado_admin');
+// formularios portal
+const consultaForm = document.getElementById('consultaForm');
+const crearForm = document.getElementById('crearForm');
+const resultadoConsulta = document.getElementById('resultadoConsulta');
+const resultadoCreacion = document.getElementById('resultadoCreacion');
 
-const nuevoClienteNombre = document.getElementById('nuevo_cliente_nombre');
-const nuevoClienteRut = document.getElementById('nuevo_cliente_rut');
-const nuevoClienteActivo = document.getElementById('nuevo_cliente_activo');
-const nuevoClienteEnlistado = document.getElementById('nuevo_cliente_enlistado');
-
-// usuarios
-const listaUsuarios = document.getElementById('listaUsuarios');
-const formEditarUsuario = document.getElementById('formEditarUsuario');
-const formNuevoUsuario = document.getElementById('formNuevoUsuario');
-const adminUsuarioResultado = document.getElementById('adminUsuarioResultado');
-const adminNuevoUsuarioResultado = document.getElementById('adminNuevoUsuarioResultado');
-const textoSinUsuarioSeleccionado = document.getElementById('textoSinUsuarioSeleccionado');
-
-const usuarioIdAdmin = document.getElementById('usuario_id_admin');
-const usuarioNombreAdmin = document.getElementById('usuario_nombre_admin');
-const usuarioEmailAdmin = document.getElementById('usuario_email_admin');
-const usuarioRolAdmin = document.getElementById('usuario_rol_admin');
-const usuarioPasswordAdmin = document.getElementById('usuario_password_admin');
-const usuarioActivoAdmin = document.getElementById('usuario_activo_admin');
-
-const nuevoUsuarioCliente = document.getElementById('nuevo_usuario_cliente');
-const nuevoUsuarioNombre = document.getElementById('nuevo_usuario_nombre');
-const nuevoUsuarioEmail = document.getElementById('nuevo_usuario_email');
-const nuevoUsuarioPassword = document.getElementById('nuevo_usuario_password');
-const nuevoUsuarioRol = document.getElementById('nuevo_usuario_rol');
-const nuevoUsuarioActivo = document.getElementById('nuevo_usuario_activo');
-
-// botones navegación
+// navegación principal
 document.getElementById('btnMostrarConsulta').onclick = () => {
   ocultarTodasLasSecciones();
   seccionConsulta.classList.remove('oculto');
@@ -118,30 +96,18 @@ document.getElementById('btnVolverCreacion').onclick = volverMenu;
 document.getElementById('btnVolverAdmin').onclick = volverMenu;
 btnCerrarSesion.onclick = cerrarSesion;
 
-// tabs admin
 tabMensajes.onclick = async () => {
   mostrarTabMensajes();
   await cargarReglasAdmin();
 };
 
-tabClientes.onclick = async () => {
+tabClientes.onclick = () => {
   mostrarTabClientes();
-  await cargarClientesAdmin();
-  await cargarClientesParaSelectUsuario();
 };
 
-tabUsuarios.onclick = async () => {
+tabUsuarios.onclick = () => {
   mostrarTabUsuarios();
-  await cargarUsuariosAdmin();
-  await cargarClientesParaSelectUsuario();
 };
-
-// formularios
-const consultaForm = document.getElementById('consultaForm');
-const crearForm = document.getElementById('crearForm');
-
-const resultadoConsulta = document.getElementById('resultadoConsulta');
-const resultadoCreacion = document.getElementById('resultadoCreacion');
 
 function ocultarTodasLasSecciones() {
   menuPrincipal.classList.add('oculto');
@@ -162,7 +128,6 @@ function guardarSesion(data) {
 function leerSesion() {
   const raw = localStorage.getItem('appia_session');
   if (!raw) return null;
-
   try {
     return JSON.parse(raw);
   } catch {
@@ -178,19 +143,15 @@ function limpiarSesion() {
 function cargarDatosClienteEnPantalla() {
   if (!session?.cliente || !session?.usuario) return;
 
-  const nombre = session.cliente.nombre_empresa;
-  const rut = session.cliente.rut_empresa;
-  const rol = session.usuario.rol;
+  clienteNombre.innerText = session.cliente.nombre_empresa;
+  clienteRut.innerText = session.cliente.rut_empresa;
+  clienteRol.innerText = session.usuario.rol;
 
-  clienteNombre.innerText = nombre;
-  clienteRut.innerText = rut;
-  clienteRol.innerText = rol;
+  clienteNombreConsulta.innerText = session.cliente.nombre_empresa;
+  clienteRutConsulta.innerText = session.cliente.rut_empresa;
 
-  clienteNombreConsulta.innerText = nombre;
-  clienteRutConsulta.innerText = rut;
-
-  clienteNombreCreacion.innerText = nombre;
-  clienteRutCreacion.innerText = rut;
+  clienteNombreCreacion.innerText = session.cliente.nombre_empresa;
+  clienteRutCreacion.innerText = session.cliente.rut_empresa;
 
   adminNombre.innerText = session.usuario.nombre_usuario;
   adminEmail.innerText = session.usuario.email;
@@ -198,9 +159,7 @@ function cargarDatosClienteEnPantalla() {
 }
 
 function configurarVisibilidadAdmin() {
-  const esAdmin = session?.usuario?.rol === 'admin';
-
-  if (esAdmin) {
+  if (session?.usuario?.rol === 'admin') {
     btnMostrarAdmin.classList.remove('oculto');
   } else {
     btnMostrarAdmin.classList.add('oculto');
@@ -222,28 +181,9 @@ function mostrarAplicacion() {
 function mostrarLogin() {
   appContainer.classList.add('oculto');
   loginContainer.classList.remove('oculto');
-
   loginForm.reset();
   loginResultado.classList.add('oculto');
   loginResultado.innerHTML = '';
-
-  resultadoConsulta.classList.add('oculto');
-  resultadoConsulta.innerHTML = '';
-
-  resultadoCreacion.classList.add('oculto');
-  resultadoCreacion.innerHTML = '';
-
-  adminResultado.classList.add('oculto');
-  adminResultado.innerHTML = '';
-  adminClienteResultado.classList.add('oculto');
-  adminClienteResultado.innerHTML = '';
-  adminNuevoClienteResultado.classList.add('oculto');
-  adminNuevoClienteResultado.innerHTML = '';
-  adminUsuarioResultado.classList.add('oculto');
-  adminUsuarioResultado.innerHTML = '';
-  adminNuevoUsuarioResultado.classList.add('oculto');
-  adminNuevoUsuarioResultado.innerHTML = '';
-
   volverMenu();
 }
 
@@ -271,10 +211,8 @@ function mostrarTabUsuarios() {
   adminUsuariosPanel.classList.remove('oculto');
 }
 
-// REGLAS
+// reglas
 async function cargarReglasAdmin() {
-  if (session?.usuario?.rol !== 'admin') return;
-
   listaReglas.innerHTML = 'Cargando reglas...';
 
   try {
@@ -282,17 +220,22 @@ async function cargarReglasAdmin() {
     const data = await res.json();
 
     if (!res.ok) {
-      listaReglas.innerHTML = `<div class="resultado estado-error">No fue posible cargar reglas: ${data.error || 'Error'}</div>`;
+      listaReglas.innerHTML = `<div class="resultado estado-error">${data.error || 'Error cargando reglas'}</div>`;
       return;
     }
 
-    listaReglas.innerHTML = (data.reglas || []).map((regla) => `
+    if (!data.reglas || data.reglas.length === 0) {
+      listaReglas.innerHTML = '<p>No hay reglas registradas.</p>';
+      return;
+    }
+
+    listaReglas.innerHTML = data.reglas.map((regla) => `
       <button type="button" class="regla-item" data-id="${regla.id}">
-        <strong>#${regla.id}</strong> - ${regla.estado_ticket || 'Sin estado'} / ${regla.area_resolutora || 'Sin área'}
+        <strong>#${regla.id}</strong> - ${regla.estado_ticket}
         <br>
-        <small>${regla.tipologia || 'Sin tipología'} | ${regla.horas_minimas} - ${regla.horas_maximas} hrs | ${regla.activo ? 'Activa' : 'Inactiva'}</small>
+        <small>${regla.area_resolutora} | ${regla.tipologia} | ${regla.horas_minimas}-${regla.horas_maximas} hrs | prioridad ${regla.prioridad} | ${regla.activo ? 'Activa' : 'Inactiva'}</small>
       </button>
-    `).join('') || '<p>No hay reglas registradas.</p>';
+    `).join('');
 
     document.querySelectorAll('.regla-item').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -307,10 +250,13 @@ async function cargarReglasAdmin() {
 
 function cargarReglaEnFormulario(regla) {
   reglaId.value = regla.id;
+  reglaCanal.value = regla.canal || '';
   reglaEstado.value = regla.estado_ticket || '';
   reglaArea.value = regla.area_resolutora || '';
   reglaTipologia.value = regla.tipologia || '';
-  reglaHoras.value = `${regla.horas_minimas} - ${regla.horas_maximas} horas`;
+  reglaHorasMin.value = regla.horas_minimas ?? 0;
+  reglaHorasMax.value = regla.horas_maximas ?? 0;
+  reglaPrioridad.value = regla.prioridad ?? 1;
   reglaMensaje.value = regla.mensaje || '';
   reglaActivo.checked = !!regla.activo;
 
@@ -319,118 +265,6 @@ function cargarReglaEnFormulario(regla) {
 
   adminResultado.classList.add('oculto');
   adminResultado.innerHTML = '';
-}
-
-// CLIENTES
-async function cargarClientesAdmin() {
-  if (session?.usuario?.rol !== 'admin') return;
-
-  listaClientes.innerHTML = 'Cargando clientes...';
-
-  try {
-    const res = await fetch('/api/obtener-clientes');
-    const data = await res.json();
-
-    if (!res.ok) {
-      listaClientes.innerHTML = `<div class="resultado estado-error">No fue posible cargar clientes: ${data.error || 'Error'}</div>`;
-      return;
-    }
-
-    listaClientes.innerHTML = (data.clientes || []).map((cliente) => `
-      <button type="button" class="regla-item cliente-item" data-id="${cliente.id}">
-        <strong>#${cliente.id}</strong> - ${cliente.nombre_empresa}
-        <br>
-        <small>${cliente.rut_empresa} | ${cliente.activo ? 'Activo' : 'Inactivo'} | ${cliente.enlistado ? 'Enlistado' : 'No enlistado'}</small>
-      </button>
-    `).join('') || '<p>No hay clientes registrados.</p>';
-
-    document.querySelectorAll('.cliente-item').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const cliente = data.clientes.find((c) => c.id === Number(btn.dataset.id));
-        if (cliente) cargarClienteEnFormulario(cliente);
-      });
-    });
-  } catch (error) {
-    listaClientes.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
-  }
-}
-
-async function cargarClientesParaSelectUsuario() {
-  try {
-    const res = await fetch('/api/obtener-clientes');
-    const data = await res.json();
-
-    if (!res.ok || !data.clientes) return;
-
-    nuevoUsuarioCliente.innerHTML = data.clientes
-      .map((cliente) => `<option value="${cliente.id}">${cliente.nombre_empresa} (${cliente.rut_empresa})</option>`)
-      .join('');
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function cargarClienteEnFormulario(cliente) {
-  clienteIdAdmin.value = cliente.id;
-  clienteNombreAdmin.value = cliente.nombre_empresa || '';
-  clienteRutAdmin.value = cliente.rut_empresa || '';
-  clienteActivoAdmin.checked = !!cliente.activo;
-  clienteEnlistadoAdmin.checked = !!cliente.enlistado;
-
-  textoSinClienteSeleccionado.classList.add('oculto');
-  formEditarCliente.classList.remove('oculto');
-
-  adminClienteResultado.classList.add('oculto');
-  adminClienteResultado.innerHTML = '';
-}
-
-// USUARIOS
-async function cargarUsuariosAdmin() {
-  if (session?.usuario?.rol !== 'admin') return;
-
-  listaUsuarios.innerHTML = 'Cargando usuarios...';
-
-  try {
-    const res = await fetch('/api/obtener-usuarios');
-    const data = await res.json();
-
-    if (!res.ok) {
-      listaUsuarios.innerHTML = `<div class="resultado estado-error">No fue posible cargar usuarios: ${data.error || 'Error'}</div>`;
-      return;
-    }
-
-    listaUsuarios.innerHTML = (data.usuarios || []).map((usuario) => `
-      <button type="button" class="regla-item usuario-item" data-id="${usuario.id}">
-        <strong>#${usuario.id}</strong> - ${usuario.nombre_usuario}
-        <br>
-        <small>${usuario.email} | ${usuario.rol} | ${usuario.activo ? 'Activo' : 'Inactivo'}</small>
-      </button>
-    `).join('') || '<p>No hay usuarios registrados.</p>';
-
-    document.querySelectorAll('.usuario-item').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const usuario = data.usuarios.find((u) => u.id === Number(btn.dataset.id));
-        if (usuario) cargarUsuarioEnFormulario(usuario);
-      });
-    });
-  } catch (error) {
-    listaUsuarios.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
-  }
-}
-
-function cargarUsuarioEnFormulario(usuario) {
-  usuarioIdAdmin.value = usuario.id;
-  usuarioNombreAdmin.value = usuario.nombre_usuario || '';
-  usuarioEmailAdmin.value = usuario.email || '';
-  usuarioRolAdmin.value = usuario.rol || '';
-  usuarioPasswordAdmin.value = usuario.password || '';
-  usuarioActivoAdmin.checked = !!usuario.activo;
-
-  textoSinUsuarioSeleccionado.classList.add('oculto');
-  formEditarUsuario.classList.remove('oculto');
-
-  adminUsuarioResultado.classList.add('oculto');
-  adminUsuarioResultado.innerHTML = '';
 }
 
 // restaurar sesión
@@ -445,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// LOGIN
+// login
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -480,178 +314,7 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-// CONSULTA
-consultaForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  if (!session?.cliente?.rut_empresa) {
-    resultadoConsulta.classList.remove('oculto');
-    resultadoConsulta.classList.add('estado-error');
-    resultadoConsulta.innerHTML = 'No existe sesión activa.';
-    return;
-  }
-
-  const rut_empresa = session.cliente.rut_empresa;
-  const bpi = document.getElementById('bpi_consulta').value.trim();
-
-  resultadoConsulta.className = 'resultado';
-  resultadoConsulta.innerHTML = 'Consultando ticket...';
-  resultadoConsulta.classList.remove('oculto', 'estado-ok', 'estado-error');
-
-  try {
-    const response = await fetch('/api/consultar-ticket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rut_empresa, bpi })
-    });
-
-    const rawText = await response.text();
-    let data;
-
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      throw new Error(`La API no devolvió JSON válido. Respuesta: ${rawText.substring(0, 200)}`);
-    }
-
-    resultadoConsulta.classList.remove('oculto');
-
-    if (!response.ok) {
-      resultadoConsulta.classList.add('estado-error');
-      resultadoConsulta.innerHTML = `
-        <h3>No fue posible consultar</h3>
-        <div class="resultado-item"><strong>Detalle:</strong> ${data.error || 'Error desconocido'}</div>
-      `;
-      return;
-    }
-
-    const ticketHtml = data.ticket
-      ? `
-        <div class="resultado-item"><strong>Ticket:</strong> ${data.ticket.ticket_numero}</div>
-        <div class="resultado-item"><strong>Estado:</strong> ${data.ticket.estado}</div>
-        <div class="resultado-item"><strong>Área resolutora:</strong> ${data.ticket.area_resolutora}</div>
-        <div class="resultado-item"><strong>Tipología:</strong> ${data.ticket.tipologia}</div>
-        <div class="resultado-item"><strong>Descripción:</strong> ${data.ticket.descripcion}</div>
-        <div class="resultado-item"><strong>Horas transcurridas:</strong> ${data.horas_transcurridas ?? 'No disponible'}</div>
-        <div class="mensaje-automatico">
-          <strong>Mensaje automático:</strong>
-          <p>${data.mensaje || 'Sin mensaje disponible.'}</p>
-        </div>
-      `
-      : `
-        <div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>
-      `;
-
-    resultadoConsulta.classList.add('estado-ok');
-    resultadoConsulta.innerHTML = `
-      <h3>Consulta exitosa</h3>
-      <div class="resultado-item"><strong>Cliente:</strong> ${data.cliente.nombre_empresa}</div>
-      <div class="resultado-item"><strong>RUT:</strong> ${data.cliente.rut_empresa}</div>
-      <div class="resultado-item"><strong>Servicio:</strong> ${data.servicio.nombre_servicio}</div>
-      <div class="resultado-item"><strong>BPI:</strong> ${data.servicio.bpi}</div>
-      <div class="resultado-item"><strong>Dirección:</strong> ${data.servicio.direccion}</div>
-      ${ticketHtml}
-    `;
-  } catch (error) {
-    resultadoConsulta.classList.remove('oculto');
-    resultadoConsulta.classList.add('estado-error');
-    resultadoConsulta.innerHTML = `
-      <h3>Error de conexión</h3>
-      <div class="resultado-item">${error.message}</div>
-    `;
-  }
-});
-
-// CREAR
-crearForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  if (!session?.cliente?.rut_empresa) {
-    resultadoCreacion.classList.remove('oculto');
-    resultadoCreacion.classList.add('estado-error');
-    resultadoCreacion.innerHTML = 'No existe sesión activa.';
-    return;
-  }
-
-  const body = {
-    rut_empresa: session.cliente.rut_empresa,
-    bpi: document.getElementById('bpi_creacion').value.trim(),
-    tipo_solicitud: document.getElementById('tipo_solicitud').value,
-    descripcion: document.getElementById('descripcion_creacion').value.trim()
-  };
-
-  resultadoCreacion.className = 'resultado';
-  resultadoCreacion.innerHTML = 'Creando ticket...';
-  resultadoCreacion.classList.remove('oculto', 'estado-ok', 'estado-error');
-
-  try {
-    const response = await fetch('/api/crear-ticket', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-
-    const rawText = await response.text();
-    let data;
-
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      throw new Error(`La API no devolvió JSON válido. Respuesta: ${rawText.substring(0, 200)}`);
-    }
-
-    resultadoCreacion.classList.remove('oculto');
-
-    if (!response.ok) {
-      if (response.status === 409 && data.ticket_existente) {
-        resultadoCreacion.classList.add('estado-error');
-        resultadoCreacion.innerHTML = `
-          <h3>Ya existe un ticket abierto</h3>
-          <div class="resultado-item"><strong>Cliente:</strong> ${data.cliente?.nombre_empresa || 'No disponible'}</div>
-          <div class="resultado-item"><strong>Servicio:</strong> ${data.servicio?.nombre_servicio || 'No disponible'}</div>
-          <div class="resultado-item"><strong>BPI:</strong> ${data.servicio?.bpi || body.bpi}</div>
-          <div class="resultado-item"><strong>Ticket existente:</strong> ${data.ticket_existente.ticket_numero}</div>
-          <div class="resultado-item"><strong>Estado:</strong> ${data.ticket_existente.estado}</div>
-          <div class="resultado-item"><strong>Área resolutora:</strong> ${data.ticket_existente.area_resolutora}</div>
-          <div class="resultado-item"><strong>Tipología:</strong> ${data.ticket_existente.tipologia}</div>
-          <div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje || data.error}</div>
-        `;
-        return;
-      }
-
-      resultadoCreacion.classList.add('estado-error');
-      resultadoCreacion.innerHTML = `
-        <h3>No fue posible crear el ticket</h3>
-        <div class="resultado-item"><strong>Detalle:</strong> ${data.error || 'Error desconocido'}</div>
-      `;
-      return;
-    }
-
-    resultadoCreacion.classList.add('estado-ok');
-    resultadoCreacion.innerHTML = `
-      <h3>Ticket creado correctamente</h3>
-      <div class="resultado-item"><strong>Cliente:</strong> ${data.cliente.nombre_empresa}</div>
-      <div class="resultado-item"><strong>RUT:</strong> ${data.cliente.rut_empresa}</div>
-      <div class="resultado-item"><strong>Servicio:</strong> ${data.servicio.nombre_servicio}</div>
-      <div class="resultado-item"><strong>BPI:</strong> ${data.servicio.bpi}</div>
-      <div class="resultado-item"><strong>Ticket:</strong> ${data.ticket.ticket_numero}</div>
-      <div class="resultado-item"><strong>Estado:</strong> ${data.ticket.estado}</div>
-      <div class="resultado-item"><strong>Área resolutora:</strong> ${data.ticket.area_resolutora}</div>
-      <div class="resultado-item"><strong>Tipología:</strong> ${data.ticket.tipologia}</div>
-      <div class="resultado-item"><strong>Descripción:</strong> ${data.ticket.descripcion}</div>
-      <div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>
-    `;
-  } catch (error) {
-    resultadoCreacion.classList.remove('oculto');
-    resultadoCreacion.classList.add('estado-error');
-    resultadoCreacion.innerHTML = `
-      <h3>Error de conexión</h3>
-      <div class="resultado-item">${error.message}</div>
-    `;
-  }
-});
-
-// EDITAR REGLA
+// editar regla completa
 formEditarRegla.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -665,8 +328,15 @@ formEditarRegla.addEventListener('submit', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: Number(reglaId.value),
-        mensaje: reglaMensaje.value,
-        activo: reglaActivo.checked
+        activo: reglaActivo.checked,
+        canal: reglaCanal.value.trim(),
+        estado_ticket: reglaEstado.value.trim(),
+        area_resolutora: reglaArea.value.trim(),
+        horas_minimas: Number(reglaHorasMin.value),
+        horas_maximas: Number(reglaHorasMax.value),
+        tipologia: reglaTipologia.value.trim(),
+        prioridad: Number(reglaPrioridad.value),
+        mensaje: reglaMensaje.value.trim()
       })
     });
 
@@ -680,7 +350,6 @@ formEditarRegla.addEventListener('submit', async (e) => {
 
     adminResultado.classList.add('estado-ok');
     adminResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
-
     await cargarReglasAdmin();
   } catch (error) {
     adminResultado.classList.add('estado-error');
@@ -688,163 +357,50 @@ formEditarRegla.addEventListener('submit', async (e) => {
   }
 });
 
-// EDITAR CLIENTE
-formEditarCliente.addEventListener('submit', async (e) => {
+// crear regla nueva
+formNuevaRegla.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  adminClienteResultado.className = 'resultado';
-  adminClienteResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
-  adminClienteResultado.innerHTML = 'Guardando cambios...';
+  adminNuevaReglaResultado.className = 'resultado';
+  adminNuevaReglaResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
+  adminNuevaReglaResultado.innerHTML = 'Creando regla...';
 
   try {
-    const res = await fetch('/api/actualizar-cliente', {
+    const res = await fetch('/api/crear-regla', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        id: Number(clienteIdAdmin.value),
-        activo: clienteActivoAdmin.checked,
-        enlistado: clienteEnlistadoAdmin.checked
+        activo: nuevaReglaActivo.checked,
+        canal: nuevaReglaCanal.value.trim(),
+        estado_ticket: nuevaReglaEstado.value.trim(),
+        area_resolutora: nuevaReglaArea.value.trim(),
+        horas_minimas: Number(nuevaReglaHorasMin.value),
+        horas_maximas: Number(nuevaReglaHorasMax.value),
+        tipologia: nuevaReglaTipologia.value.trim(),
+        prioridad: Number(nuevaReglaPrioridad.value),
+        mensaje: nuevaReglaMensaje.value.trim()
       })
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      adminClienteResultado.classList.add('estado-error');
-      adminClienteResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible guardar'}`;
+      adminNuevaReglaResultado.classList.add('estado-error');
+      adminNuevaReglaResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible crear la regla'}`;
       return;
     }
 
-    adminClienteResultado.classList.add('estado-ok');
-    adminClienteResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
+    adminNuevaReglaResultado.classList.add('estado-ok');
+    adminNuevaReglaResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
 
-    await cargarClientesAdmin();
-    await cargarClientesParaSelectUsuario();
+    formNuevaRegla.reset();
+    nuevaReglaCanal.value = 'web';
+    nuevaReglaPrioridad.value = 1;
+    nuevaReglaActivo.checked = true;
+
+    await cargarReglasAdmin();
   } catch (error) {
-    adminClienteResultado.classList.add('estado-error');
-    adminClienteResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
-  }
-});
-
-// NUEVO CLIENTE
-formNuevoCliente.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  adminNuevoClienteResultado.className = 'resultado';
-  adminNuevoClienteResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
-  adminNuevoClienteResultado.innerHTML = 'Creando cliente...';
-
-  try {
-    const res = await fetch('/api/crear-cliente', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nombre_empresa: nuevoClienteNombre.value.trim(),
-        rut_empresa: nuevoClienteRut.value.trim(),
-        activo: nuevoClienteActivo.checked,
-        enlistado: nuevoClienteEnlistado.checked
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      adminNuevoClienteResultado.classList.add('estado-error');
-      adminNuevoClienteResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible crear cliente'}`;
-      return;
-    }
-
-    adminNuevoClienteResultado.classList.add('estado-ok');
-    adminNuevoClienteResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
-
-    formNuevoCliente.reset();
-    nuevoClienteActivo.checked = true;
-    nuevoClienteEnlistado.checked = true;
-
-    await cargarClientesAdmin();
-    await cargarClientesParaSelectUsuario();
-  } catch (error) {
-    adminNuevoClienteResultado.classList.add('estado-error');
-    adminNuevoClienteResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
-  }
-});
-
-// EDITAR USUARIO
-formEditarUsuario.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  adminUsuarioResultado.className = 'resultado';
-  adminUsuarioResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
-  adminUsuarioResultado.innerHTML = 'Guardando cambios...';
-
-  try {
-    const res = await fetch('/api/actualizar-usuario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: Number(usuarioIdAdmin.value),
-        password: usuarioPasswordAdmin.value,
-        activo: usuarioActivoAdmin.checked
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      adminUsuarioResultado.classList.add('estado-error');
-      adminUsuarioResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible guardar'}`;
-      return;
-    }
-
-    adminUsuarioResultado.classList.add('estado-ok');
-    adminUsuarioResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
-
-    await cargarUsuariosAdmin();
-  } catch (error) {
-    adminUsuarioResultado.classList.add('estado-error');
-    adminUsuarioResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
-  }
-});
-
-// NUEVO USUARIO
-formNuevoUsuario.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  adminNuevoUsuarioResultado.className = 'resultado';
-  adminNuevoUsuarioResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
-  adminNuevoUsuarioResultado.innerHTML = 'Creando usuario...';
-
-  try {
-    const res = await fetch('/api/crear-usuario', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        cliente_id: Number(nuevoUsuarioCliente.value),
-        nombre_usuario: nuevoUsuarioNombre.value.trim(),
-        email: nuevoUsuarioEmail.value.trim(),
-        password: nuevoUsuarioPassword.value.trim(),
-        rol: nuevoUsuarioRol.value,
-        activo: nuevoUsuarioActivo.checked
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      adminNuevoUsuarioResultado.classList.add('estado-error');
-      adminNuevoUsuarioResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible crear usuario'}`;
-      return;
-    }
-
-    adminNuevoUsuarioResultado.classList.add('estado-ok');
-    adminNuevoUsuarioResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
-
-    formNuevoUsuario.reset();
-    nuevoUsuarioActivo.checked = true;
-
-    await cargarUsuariosAdmin();
-  } catch (error) {
-    adminNuevoUsuarioResultado.classList.add('estado-error');
-    adminNuevoUsuarioResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
+    adminNuevaReglaResultado.classList.add('estado-error');
+    adminNuevaReglaResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
   }
 });
