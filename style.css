@@ -259,3 +259,54 @@
   #btnCerrarSesion {
     margin-left: auto;
   }
+
+  #btnCerrarSesion {
+    margin-left: auto;
+  }
+  
+  .admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+  }
+  
+  .card-interno {
+    border: 1px solid var(--color-borde);
+    border-radius: 14px;
+    padding: 16px;
+    background: #F8FAFC;
+  }
+  
+  .lista-reglas {
+    display: grid;
+    gap: 10px;
+  }
+  
+  .regla-item {
+    width: 100%;
+    text-align: left;
+    border: 1px solid var(--color-borde);
+    background: var(--color-blanco);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+  }
+  
+  .regla-item:hover {
+    border-color: var(--color-secundario);
+    background: #EEF4FF;
+  }
+  
+  .check-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+  }
+  
+  @media (max-width: 900px) {
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+  }

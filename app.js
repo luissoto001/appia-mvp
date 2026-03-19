@@ -31,6 +31,19 @@ const adminNombre = document.getElementById('adminNombre');
 const adminEmail = document.getElementById('adminEmail');
 const adminRol = document.getElementById('adminRol');
 
+const listaReglas = document.getElementById('listaReglas');
+const formEditarRegla = document.getElementById('formEditarRegla');
+const adminResultado = document.getElementById('adminResultado');
+const textoSinSeleccion = document.getElementById('textoSinSeleccion');
+
+const reglaId = document.getElementById('regla_id');
+const reglaEstado = document.getElementById('regla_estado');
+const reglaArea = document.getElementById('regla_area');
+const reglaTipologia = document.getElementById('regla_tipologia');
+const reglaHoras = document.getElementById('regla_horas');
+const reglaMensaje = document.getElementById('regla_mensaje');
+const reglaActivo = document.getElementById('regla_activo');
+
 // botones navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
   ocultarTodasLasSecciones();
@@ -42,9 +55,10 @@ document.getElementById('btnMostrarCreacion').onclick = () => {
   seccionCreacion.classList.remove('oculto');
 };
 
-btnMostrarAdmin.onclick = () => {
+btnMostrarAdmin.onclick = async () => {
   ocultarTodasLasSecciones();
   seccionAdmin.classList.remove('oculto');
+  await cargarReglasAdmin();
 };
 
 document.getElementById('btnVolverConsulta').onclick = volverMenu;
@@ -149,6 +163,9 @@ function mostrarLogin() {
   resultadoCreacion.classList.add('oculto');
   resultadoCreacion.innerHTML = '';
 
+  adminResultado.classList.add('oculto');
+  adminResultado.innerHTML = '';
+
   volverMenu();
 }
 
@@ -156,6 +173,60 @@ function cerrarSesion() {
   session = null;
   limpiarSesion();
   mostrarLogin();
+}
+
+async function cargarReglasAdmin() {
+  if (session?.usuario?.rol !== 'admin') return;
+
+  listaReglas.innerHTML = 'Cargando reglas...';
+
+  try {
+    const res = await fetch('/api/obtener-reglas');
+    const data = await res.json();
+
+    if (!res.ok) {
+      listaReglas.innerHTML = `<div class="resultado estado-error">No fue posible cargar reglas: ${data.error || 'Error'}</div>`;
+      return;
+    }
+
+    if (!data.reglas || data.reglas.length === 0) {
+      listaReglas.innerHTML = '<p>No hay reglas registradas.</p>';
+      return;
+    }
+
+    listaReglas.innerHTML = data.reglas.map((regla) => `
+      <button type="button" class="regla-item" data-id="${regla.id}">
+        <strong>#${regla.id}</strong> - ${regla.estado_ticket || 'Sin estado'} / ${regla.area_resolutora || 'Sin área'}
+        <br>
+        <small>${regla.tipologia || 'Sin tipología'} | ${regla.horas_minimas} - ${regla.horas_maximas} hrs | ${regla.activo ? 'Activa' : 'Inactiva'}</small>
+      </button>
+    `).join('');
+
+    document.querySelectorAll('.regla-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const regla = data.reglas.find((r) => r.id === Number(btn.dataset.id));
+        if (regla) cargarReglaEnFormulario(regla);
+      });
+    });
+  } catch (error) {
+    listaReglas.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
+  }
+}
+
+function cargarReglaEnFormulario(regla) {
+  reglaId.value = regla.id;
+  reglaEstado.value = regla.estado_ticket || '';
+  reglaArea.value = regla.area_resolutora || '';
+  reglaTipologia.value = regla.tipologia || '';
+  reglaHoras.value = `${regla.horas_minimas} - ${regla.horas_maximas} horas`;
+  reglaMensaje.value = regla.mensaje || '';
+  reglaActivo.checked = !!regla.activo;
+
+  textoSinSeleccion.classList.add('oculto');
+  formEditarRegla.classList.remove('oculto');
+
+  adminResultado.classList.add('oculto');
+  adminResultado.innerHTML = '';
 }
 
 // restaurar sesión al cargar
@@ -373,5 +444,42 @@ crearForm.addEventListener('submit', async (e) => {
       <h3>Error de conexión</h3>
       <div class="resultado-item">${error.message}</div>
     `;
+  }
+});
+
+// EDITAR REGLA
+formEditarRegla.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  adminResultado.className = 'resultado';
+  adminResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
+  adminResultado.innerHTML = 'Guardando cambios...';
+
+  try {
+    const res = await fetch('/api/actualizar-regla', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: Number(reglaId.value),
+        mensaje: reglaMensaje.value,
+        activo: reglaActivo.checked
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      adminResultado.classList.add('estado-error');
+      adminResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible guardar'}`;
+      return;
+    }
+
+    adminResultado.classList.add('estado-ok');
+    adminResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
+
+    await cargarReglasAdmin();
+  } catch (error) {
+    adminResultado.classList.add('estado-error');
+    adminResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
   }
 });

@@ -131,7 +131,7 @@
           </div>
 
           <p class="intro">
-            Bienvenido al módulo Admin. Desde aquí podrás administrar mensajes, clientes, credenciales y reportería.
+            Administración de reglas de mensajes automáticos.
           </p>
 
           <div class="cliente-box">
@@ -140,11 +140,44 @@
             <div><strong>Rol:</strong> <span id="adminRol"></span></div>
           </div>
 
-          <div class="acciones-grid">
-            <button class="accion-btn" type="button" disabled>Gestionar mensajes</button>
-            <button class="accion-btn" type="button" disabled>Gestionar clientes</button>
-            <button class="accion-btn" type="button" disabled>Resetear passwords</button>
-            <button class="accion-btn" type="button" disabled>Reportería y dashboards</button>
+          <div class="admin-grid">
+            <div class="card-interno">
+              <h3>Reglas existentes</h3>
+              <div id="listaReglas" class="lista-reglas"></div>
+            </div>
+
+            <div class="card-interno">
+              <h3>Editar regla</h3>
+
+              <form id="formEditarRegla" class="form oculto">
+                <input type="hidden" id="regla_id">
+
+                <label for="regla_estado">Estado</label>
+                <input id="regla_estado" disabled>
+
+                <label for="regla_area">Área resolutora</label>
+                <input id="regla_area" disabled>
+
+                <label for="regla_tipologia">Tipología</label>
+                <input id="regla_tipologia" disabled>
+
+                <label for="regla_horas">Rango de horas</label>
+                <input id="regla_horas" disabled>
+
+                <label for="regla_mensaje">Mensaje</label>
+                <textarea id="regla_mensaje" rows="6"></textarea>
+
+                <label class="check-line">
+                  <input type="checkbox" id="regla_activo">
+                  Regla activa
+                </label>
+
+                <button type="submit">Guardar cambios</button>
+              </form>
+
+              <div id="adminResultado" class="resultado oculto"></div>
+              <p id="textoSinSeleccion" class="intro">Selecciona una regla para editarla.</p>
+            </div>
           </div>
         </section>
       </main>
