@@ -20,27 +20,123 @@ function aplicarFiltros(query, filtros) {
   return query;
 }
 
+async function obtenerTicketsConFallback(filtros = {}, opciones = {}) {
+  const tablas = ['tickets_demo', 'tickets'];
+  let ultimoError = null;
+
+  for (const tabla of tablas) {
+    let query = supabase
+      .from(tabla)
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    query = aplicarFiltros(query, filtros);
+
+    if (opciones.modo === 'detalle') {
+      if (opciones.filtro === 'estado' && opciones.valor) {
+        query = query.eq('estado', opciones.valor);
+      }
+
+      if (opciones.filtro === 'tipologia' && opciones.valor) {
+        query = query.eq('tipologia', opciones.valor);
+      }
+
+      if (opciones.filtro === 'cliente' && opciones.valor) {
+        const numeroCliente = Number(opciones.valor);
+        if (!Number.isNaN(numeroCliente)) {
+          query = query.eq('cliente_id', numeroCliente);
+        }
+      }
+
+      if (opciones.filtro === 'abiertos') {
+        query = query.neq('estado', 'Cerrado');
+      }
+
+      if (opciones.filtro === 'cerrados') {
+        query = query.eq('estado', 'Cerrado');
+      }
+
+      query = query.limit(200);
+    }
+
+    const { data, error } = await query;
+
+    if (!error) {
+      return {
+        ok: true,
+        tabla,
+        data: data || []
+      };
+    }
+
+    ultimoError = error;
+  }
+
+  return {
+    ok: false,
+    error: ultimoError
+  };
+}
+
+async function obtenerClientesMap(clienteIds) {
+  if (!clienteIds || clienteIds.length === 0) {
+    return {};
+  }
+
+  const tablas = ['clientes_demo', 'clientes'];
+  let ultimoError = null;
+
+  for (const tabla of tablas) {
+    const { data, error } = await supabase
+      .from(tabla)
+      .select('id, nombre_empresa')
+      .in('id', clienteIds);
+
+    if (!error) {
+      return Object.fromEntries((data || []).map((c) => [c.id, c.nombre_empresa]));
+    }
+
+    ultimoError = error;
+  }
+
+  console.error('No se pudieron obtener clientes para enriquecer reportería:', ultimoError?.message);
+  return {};
+}
+
 async function enriquecerTickets(tickets) {
   if (!tickets || tickets.length === 0) {
     return [];
   }
 
   const clienteIds = [...new Set(tickets.map((t) => t.cliente_id).filter(Boolean))];
-
-  let clientesMap = {};
-  if (clienteIds.length > 0) {
-    const { data: clientesData } = await supabase
-      .from('clientes_demo')
-      .select('id, nombre_empresa')
-      .in('id', clienteIds);
-
-    clientesMap = Object.fromEntries((clientesData || []).map((c) => [c.id, c.nombre_empresa]));
-  }
+  const clientesMap = await obtenerClientesMap(clienteIds);
 
   return tickets.map((ticket) => ({
     ...ticket,
     cliente_nombre: clientesMap[ticket.cliente_id] || `Cliente ${ticket.cliente_id || ''}`
   }));
+}
+
+function agrupar(items, campo, etiquetaFn = null) {
+  const mapa = {};
+
+  items.forEach((item) => {
+    const clave = item[campo] ?? 'Sin dato';
+    const nombre = etiquetaFn ? etiquetaFn(item, clave) : String(clave);
+
+    if (!mapa[nombre]) {
+      mapa[nombre] = 0;
+    }
+
+    mapa[nombre] += 1;
+  });
+
+  return Object.entries(mapa)
+    .map(([nombre, total]) => ({
+      nombre,
+      total
+    }))
+    .sort((a, b) => b.total - a.total);
 }
 
 export default async function handler(req, res) {
@@ -63,43 +159,20 @@ export default async function handler(req, res) {
     };
 
     if (modo === 'detalle') {
-      let query = supabase
-        .from('tickets_demo')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const resultado = await obtenerTicketsConFallback(filtros, {
+        modo: 'detalle',
+        filtro,
+        valor
+      });
 
-      query = aplicarFiltros(query, filtros);
-
-      if (filtro === 'estado' && valor) {
-        query = query.eq('estado', valor);
-      }
-
-      if (filtro === 'tipologia' && valor) {
-        query = query.eq('tipologia', valor);
-      }
-
-      if (filtro === 'cliente' && valor) {
-        query = query.eq('cliente_id', Number(valor));
-      }
-
-      if (filtro === 'abiertos') {
-        query = query.neq('estado', 'Cerrado');
-      }
-
-      if (filtro === 'cerrados') {
-        query = query.eq('estado', 'Cerrado');
-      }
-
-      const { data, error } = await query.limit(200);
-
-      if (error) {
+      if (!resultado.ok) {
         return res.status(500).json({
-          error: 'Error obteniendo detalle de tickets',
-          detalle: error.message
+          error: 'Error obteniendo detalle de reportes',
+          detalle: resultado.error?.message || 'No fue posible consultar tickets'
         });
       }
 
-      const ticketsEnriquecidos = await enriquecerTickets(data || []);
+      const ticketsEnriquecidos = await enriquecerTickets(resultado.data);
 
       return res.status(200).json({
         ok: true,
@@ -107,51 +180,22 @@ export default async function handler(req, res) {
       });
     }
 
-    let query = supabase
-      .from('tickets_demo')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const resultado = await obtenerTicketsConFallback(filtros);
 
-    query = aplicarFiltros(query, filtros);
-
-    const { data: tickets, error } = await query;
-
-    if (error) {
+    if (!resultado.ok) {
       return res.status(500).json({
         error: 'Error obteniendo reportes',
-        detalle: error.message
+        detalle: resultado.error?.message || 'No fue posible consultar tickets'
       });
     }
 
-    const ticketsEnriquecidos = await enriquecerTickets(tickets || []);
+    const ticketsEnriquecidos = await enriquecerTickets(resultado.data);
     const total = ticketsEnriquecidos.length;
     const abiertos = ticketsEnriquecidos.filter((t) => t.estado !== 'Cerrado').length;
     const cerrados = ticketsEnriquecidos.filter((t) => t.estado === 'Cerrado').length;
     const clientesConTickets = new Set(
       ticketsEnriquecidos.map((t) => t.cliente_id).filter(Boolean)
     ).size;
-
-    const agrupar = (items, campo, etiquetaFn = null) => {
-      const mapa = {};
-
-      items.forEach((item) => {
-        const clave = item[campo] ?? 'Sin dato';
-        const nombre = etiquetaFn ? etiquetaFn(item, clave) : String(clave);
-
-        if (!mapa[nombre]) {
-          mapa[nombre] = 0;
-        }
-
-        mapa[nombre] += 1;
-      });
-
-      return Object.entries(mapa)
-        .map(([nombre, totalGrupo]) => ({
-          nombre,
-          total: totalGrupo
-        }))
-        .sort((a, b) => b.total - a.total);
-    };
 
     const por_estado = agrupar(ticketsEnriquecidos, 'estado');
     const por_tipologia = agrupar(ticketsEnriquecidos, 'tipologia');
