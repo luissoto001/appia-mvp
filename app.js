@@ -1,4 +1,4 @@
-const APP_VERSION = '0.4.0';
+const APP_VERSION = '0.5.0';
 
 let session = null;
 let chartEstados = null;
@@ -536,99 +536,113 @@ function validarEmail(email) {
 }
 
 function validarRut(rut) {
-  return /^\d{7,8}-[\dkK]$/.test(rut);
+  return /^\d{7,8}-[\dkK]$/i.test(String(rut || '').trim());
 }
 
 function validarBpi(bpi) {
-  return /^BPI[0-9A-Za-z]+$/.test(bpi);
+  return /^BPI[0-9A-Za-z]+$/.test(String(bpi || '').trim());
 }
 
-function sumarMinutos(fechaBase, minutos) {
-  return new Date(new Date(fechaBase).getTime() + minutos * 60000);
-}
-
-function formatearHora(fecha) {
+function formatearHoraDesdeIso(iso) {
+  const fecha = new Date(iso);
+  if (Number.isNaN(fecha.getTime())) return '';
   return fecha.toLocaleTimeString('es-CL', {
     hour: '2-digit',
     minute: '2-digit'
   });
 }
 
-function construirTimelineDemo(ticket) {
+function renderTimelineHorizontalDesdeHistorial(historial = [], ticket = null) {
+  const eventos = (historial || []).map((evento) => ({
+    hora: formatearHoraDesdeIso(evento.created_at),
+    titulo: evento.titulo_evento || evento.titulo || 'Actualización',
+    detalle: evento.detalle_evento || evento.detalle || '',
+    estado: evento.estado || ''
+  }));
+
+  if (eventos.length === 0 && ticket) {
+    return renderTimelineHorizontalFallback(ticket);
+  }
+
+  const estadoActual = ticket?.estado || eventos[eventos.length - 1]?.estado || 'Sin estado';
+
+  const html = eventos.map((evento) => `
+    <div class="timeline-step activo">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <div class="timeline-hour">${evento.hora}</div>
+        <div class="timeline-title">${evento.titulo}</div>
+        <div class="timeline-detail">${evento.detalle}</div>
+      </div>
+    </div>
+  `).join('');
+
+  return `
+    <div class="timeline-wrapper">
+      <div class="timeline-status"><strong>Estado actual:</strong> ${estadoActual}</div>
+      <div class="timeline-horizontal">
+        ${html}
+      </div>
+    </div>
+  `;
+}
+
+function renderTimelineHorizontalFallback(ticket) {
   const inicio = new Date(ticket.created_at);
   const eventos = [
     {
-      hora: formatearHora(inicio),
+      hora: inicio.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       titulo: 'Ticket creado',
       detalle: `Ticket ${ticket.ticket_numero} ingresado`
     }
   ];
 
-  const asignado = sumarMinutos(inicio, 20);
+  const asignado = new Date(inicio.getTime() + 20 * 60000);
   eventos.push({
-    hora: formatearHora(asignado),
+    hora: asignado.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
     titulo: 'Asignado a especialistas',
-    detalle: `Grupo resolutor: ${ticket.area_resolutora}`
+    detalle: `Grupo resolutor: ${ticket.area_resolutora || 'No informado'}`
   });
 
-  const analisis = sumarMinutos(inicio, 90);
+  const analisis = new Date(inicio.getTime() + 90 * 60000);
   eventos.push({
-    hora: formatearHora(analisis),
+    hora: analisis.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
     titulo: 'En análisis',
-    detalle: `Tipología: ${ticket.tipologia}`
+    detalle: `Tipología: ${ticket.tipologia || 'No informada'}`
   });
-
-  if (ticket.estado === 'Ingresado') {
-    return { actual: 'Ticket ingresado', eventos, actualIndex: 0 };
-  }
-
-  if (ticket.estado === 'En proceso') {
-    return { actual: 'En proceso', eventos, actualIndex: 2 };
-  }
 
   if (ticket.estado === 'Derivado') {
-    const derivado = sumarMinutos(inicio, 150);
+    const derivado = new Date(inicio.getTime() + 150 * 60000);
     eventos.push({
-      hora: formatearHora(derivado),
+      hora: derivado.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       titulo: 'Ticket derivado',
       detalle: 'Escalado a nueva célula de atención'
     });
-    return { actual: 'Derivado', eventos, actualIndex: 3 };
   }
 
   if (ticket.estado === 'Resuelto' || ticket.estado === 'Cerrado') {
-    const cierre = sumarMinutos(inicio, 240);
+    const cierre = new Date(inicio.getTime() + 240 * 60000);
     eventos.push({
-      hora: formatearHora(cierre),
+      hora: cierre.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
       titulo: ticket.estado === 'Cerrado' ? 'Ticket cerrado' : 'Ticket resuelto',
       detalle: `Estado final: ${ticket.estado}`
     });
-    return { actual: ticket.estado, eventos, actualIndex: 3 };
   }
 
-  return { actual: ticket.estado, eventos, actualIndex: eventos.length - 1 };
-}
-
-function renderTimelineHorizontal(ticket) {
-  const timeline = construirTimelineDemo(ticket);
-
-  const html = timeline.eventos.map((evento, index) => {
-    const estadoClase = index <= timeline.actualIndex ? 'timeline-step activo' : 'timeline-step';
-    return `
-      <div class="${estadoClase}">
-        <div class="timeline-dot"></div>
-        <div class="timeline-content">
-          <div class="timeline-hour">${evento.hora}</div>
-          <div class="timeline-title">${evento.titulo}</div>
-          <div class="timeline-detail">${evento.detalle}</div>
-        </div>
+  const html = eventos.map((evento) => `
+    <div class="timeline-step activo">
+      <div class="timeline-dot"></div>
+      <div class="timeline-content">
+        <div class="timeline-hour">${evento.hora}</div>
+        <div class="timeline-title">${evento.titulo}</div>
+        <div class="timeline-detail">${evento.detalle}</div>
       </div>
-    `;
-  }).join('');
+    </div>
+  `).join('');
 
   return `
     <div class="timeline-wrapper">
-      <div class="timeline-status"><strong>Estado actual:</strong> ${timeline.actual}</div>
+      <div class="timeline-status"><strong>Estado actual:</strong> ${ticket.estado}</div>
       <div class="timeline-horizontal">
         ${html}
       </div>
@@ -649,7 +663,7 @@ function renderTicketIndividual(data) {
         <strong>Mensaje automático:</strong>
         <p>${data.mensaje || 'Sin mensaje disponible.'}</p>
       </div>
-      ${data.ticket ? renderTimelineHorizontal(data.ticket) : ''}
+      ${renderTimelineHorizontalDesdeHistorial(data.historial || [], data.ticket)}
     `
     : `<div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>`;
 
@@ -747,7 +761,7 @@ function renderDetalleReportes(tickets) {
       <div class="resultado-item"><strong>Tipología:</strong> ${ticket.tipologia}</div>
       <div class="resultado-item"><strong>BPI:</strong> ${ticket.bpi}</div>
       <div class="resultado-item"><strong>Descripción:</strong> ${ticket.descripcion || ''}</div>
-      ${renderTimelineHorizontal(ticket)}
+      ${renderTimelineHorizontalFallback(ticket)}
     </div>
   `).join('');
 }
@@ -1224,6 +1238,7 @@ crearForm.addEventListener('submit', async (e) => {
       <div class="resultado-item"><strong>Área resolutora:</strong> ${data.ticket.area_resolutora}</div>
       <div class="resultado-item"><strong>Tipología:</strong> ${data.ticket.tipologia}</div>
       <div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>
+      ${renderTimelineHorizontalDesdeHistorial(data.historial || [], data.ticket)}
     `);
   } catch (error) {
     setResultado(resultadoCreacion, 'estado-error', `<strong>Error:</strong> ${error.message}`);
