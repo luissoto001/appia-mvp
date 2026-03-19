@@ -47,6 +47,7 @@
           <div class="cliente-box">
             <div><strong>Cliente:</strong> <span id="clienteNombre"></span></div>
             <div><strong>RUT:</strong> <span id="clienteRut"></span></div>
+            <div><strong>Rol:</strong> <span id="clienteRol"></span></div>
           </div>
 
           <div class="acciones-grid">
@@ -56,6 +57,10 @@
 
             <button class="accion-btn" id="btnMostrarCreacion" type="button">
               Ingresar ticket
+            </button>
+
+            <button class="accion-btn oculto" id="btnMostrarAdmin" type="button">
+              Admin
             </button>
           </div>
         </section>
@@ -117,6 +122,30 @@
           </form>
 
           <div id="resultadoCreacion" class="resultado oculto"></div>
+        </section>
+
+        <section class="card oculto" id="seccionAdmin">
+          <div class="seccion-header">
+            <h2>Panel de administración</h2>
+            <button class="btn-secundario" id="btnVolverAdmin" type="button">Volver</button>
+          </div>
+
+          <p class="intro">
+            Bienvenido al módulo Admin. Desde aquí podrás administrar mensajes, clientes, credenciales y reportería.
+          </p>
+
+          <div class="cliente-box">
+            <div><strong>Usuario admin:</strong> <span id="adminNombre"></span></div>
+            <div><strong>Email:</strong> <span id="adminEmail"></span></div>
+            <div><strong>Rol:</strong> <span id="adminRol"></span></div>
+          </div>
+
+          <div class="acciones-grid">
+            <button class="accion-btn" type="button" disabled>Gestionar mensajes</button>
+            <button class="accion-btn" type="button" disabled>Gestionar clientes</button>
+            <button class="accion-btn" type="button" disabled>Resetear passwords</button>
+            <button class="accion-btn" type="button" disabled>Reportería y dashboards</button>
+          </div>
         </section>
       </main>
     </div>

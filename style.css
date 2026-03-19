@@ -256,3 +256,6 @@
       width: 100%;
     }
   }
+  #btnCerrarSesion {
+    margin-left: auto;
+  }

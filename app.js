@@ -12,30 +12,44 @@ const btnCerrarSesion = document.getElementById('btnCerrarSesion');
 const menuPrincipal = document.getElementById('menuPrincipal');
 const seccionConsulta = document.getElementById('seccionConsulta');
 const seccionCreacion = document.getElementById('seccionCreacion');
+const seccionAdmin = document.getElementById('seccionAdmin');
 
 // info cliente
 const clienteNombre = document.getElementById('clienteNombre');
 const clienteRut = document.getElementById('clienteRut');
+const clienteRol = document.getElementById('clienteRol');
+
 const clienteNombreConsulta = document.getElementById('clienteNombreConsulta');
 const clienteRutConsulta = document.getElementById('clienteRutConsulta');
+
 const clienteNombreCreacion = document.getElementById('clienteNombreCreacion');
 const clienteRutCreacion = document.getElementById('clienteRutCreacion');
 
+// admin
+const btnMostrarAdmin = document.getElementById('btnMostrarAdmin');
+const adminNombre = document.getElementById('adminNombre');
+const adminEmail = document.getElementById('adminEmail');
+const adminRol = document.getElementById('adminRol');
+
 // botones navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
-  menuPrincipal.classList.add('oculto');
+  ocultarTodasLasSecciones();
   seccionConsulta.classList.remove('oculto');
-  seccionCreacion.classList.add('oculto');
 };
 
 document.getElementById('btnMostrarCreacion').onclick = () => {
-  menuPrincipal.classList.add('oculto');
-  seccionConsulta.classList.add('oculto');
+  ocultarTodasLasSecciones();
   seccionCreacion.classList.remove('oculto');
+};
+
+btnMostrarAdmin.onclick = () => {
+  ocultarTodasLasSecciones();
+  seccionAdmin.classList.remove('oculto');
 };
 
 document.getElementById('btnVolverConsulta').onclick = volverMenu;
 document.getElementById('btnVolverCreacion').onclick = volverMenu;
+document.getElementById('btnVolverAdmin').onclick = volverMenu;
 btnCerrarSesion.onclick = cerrarSesion;
 
 // formularios
@@ -45,9 +59,15 @@ const crearForm = document.getElementById('crearForm');
 const resultadoConsulta = document.getElementById('resultadoConsulta');
 const resultadoCreacion = document.getElementById('resultadoCreacion');
 
-function volverMenu() {
+function ocultarTodasLasSecciones() {
+  menuPrincipal.classList.add('oculto');
   seccionConsulta.classList.add('oculto');
   seccionCreacion.classList.add('oculto');
+  seccionAdmin.classList.add('oculto');
+}
+
+function volverMenu() {
+  ocultarTodasLasSecciones();
   menuPrincipal.classList.remove('oculto');
 }
 
@@ -72,19 +92,35 @@ function limpiarSesion() {
 }
 
 function cargarDatosClienteEnPantalla() {
-  if (!session?.cliente) return;
+  if (!session?.cliente || !session?.usuario) return;
 
   const nombre = session.cliente.nombre_empresa;
   const rut = session.cliente.rut_empresa;
+  const rol = session.usuario.rol;
 
   clienteNombre.innerText = nombre;
   clienteRut.innerText = rut;
+  clienteRol.innerText = rol;
 
   clienteNombreConsulta.innerText = nombre;
   clienteRutConsulta.innerText = rut;
 
   clienteNombreCreacion.innerText = nombre;
   clienteRutCreacion.innerText = rut;
+
+  adminNombre.innerText = session.usuario.nombre_usuario;
+  adminEmail.innerText = session.usuario.email;
+  adminRol.innerText = session.usuario.rol;
+}
+
+function configurarVisibilidadAdmin() {
+  const esAdmin = session?.usuario?.rol === 'admin';
+
+  if (esAdmin) {
+    btnMostrarAdmin.classList.remove('oculto');
+  } else {
+    btnMostrarAdmin.classList.add('oculto');
+  }
 }
 
 function mostrarAplicacion() {
@@ -96,6 +132,7 @@ function mostrarAplicacion() {
     `${session.usuario.nombre_usuario} - ${session.cliente.nombre_empresa} - ${session.cliente.rut_empresa}`;
 
   cargarDatosClienteEnPantalla();
+  configurarVisibilidadAdmin();
 }
 
 function mostrarLogin() {
@@ -111,6 +148,8 @@ function mostrarLogin() {
 
   resultadoCreacion.classList.add('oculto');
   resultadoCreacion.innerHTML = '';
+
+  volverMenu();
 }
 
 function cerrarSesion() {
