@@ -1,3 +1,5 @@
+const APP_VERSION = '0.2.0';
+
 let session = null;
 
 // Login / layout
@@ -7,6 +9,7 @@ const loginContainer = document.getElementById('loginContainer');
 const appContainer = document.getElementById('appContainer');
 const usuarioInfo = document.getElementById('usuarioInfo');
 const btnCerrarSesion = document.getElementById('btnCerrarSesion');
+const loginVersion = document.getElementById('loginVersion');
 
 // Secciones
 const menuPrincipal = document.getElementById('menuPrincipal');
@@ -56,6 +59,11 @@ const buscarReglas = document.getElementById('buscarReglas');
 const buscarClientes = document.getElementById('buscarClientes');
 const buscarServicios = document.getElementById('buscarServicios');
 const buscarUsuarios = document.getElementById('buscarUsuarios');
+
+// Paginación clientes
+const btnClientesPrev = document.getElementById('btnClientesPrev');
+const btnClientesNext = document.getElementById('btnClientesNext');
+const clientesPaginaInfo = document.getElementById('clientesPaginaInfo');
 
 // Reglas
 const listaReglas = document.getElementById('listaReglas');
@@ -166,11 +174,21 @@ const kpiCardCerrados = document.getElementById('kpiCardCerrados');
 
 let clienteSeleccionadoId = null;
 
-// cachés para búsqueda local
+// cachés
 let reglasCache = [];
 let clientesCache = [];
 let serviciosCache = [];
 let usuariosCache = [];
+let clientesPagination = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  total_pages: 1,
+  has_prev: false,
+  has_next: false
+};
+
+let clientesSearchTimer = null;
 
 // Navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
@@ -202,7 +220,7 @@ tabMensajes.onclick = async () => {
 
 tabClientes.onclick = async () => {
   mostrarTabClientes();
-  await cargarClientesAdmin();
+  await cargarClientesAdmin(1);
   await cargarClientesParaSelectUsuario();
 };
 
@@ -225,9 +243,27 @@ kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
 kpiCardCerrados.onclick = () => cargarDetalleReportes('cerrados');
 
 buscarReglas.addEventListener('input', () => renderReglas(reglasCache));
-buscarClientes.addEventListener('input', () => renderClientes(clientesCache));
-buscarServicios.addEventListener('input', () => renderServicios(serviciosCache));
 buscarUsuarios.addEventListener('input', () => renderUsuarios(usuariosCache));
+buscarServicios.addEventListener('input', () => renderServicios(serviciosCache));
+
+buscarClientes.addEventListener('input', () => {
+  clearTimeout(clientesSearchTimer);
+  clientesSearchTimer = setTimeout(() => {
+    cargarClientesAdmin(1);
+  }, 350);
+});
+
+btnClientesPrev.addEventListener('click', async () => {
+  if (clientesPagination.has_prev) {
+    await cargarClientesAdmin(clientesPagination.page - 1);
+  }
+});
+
+btnClientesNext.addEventListener('click', async () => {
+  if (clientesPagination.has_next) {
+    await cargarClientesAdmin(clientesPagination.page + 1);
+  }
+});
 
 function ocultarTodasLasSecciones() {
   menuPrincipal.classList.add('oculto');
@@ -325,6 +361,10 @@ function mostrarAplicacion() {
   cargarDatosClienteEnPantalla();
   configurarVisibilidadAdmin();
   actualizarModoConsulta();
+
+  if (loginVersion) {
+    loginVersion.innerText = `Versión ${APP_VERSION}`;
+  }
 }
 
 function mostrarLogin() {
@@ -334,6 +374,10 @@ function mostrarLogin() {
   loginResultado.classList.add('oculto');
   loginResultado.innerHTML = '';
   volverMenu();
+
+  if (loginVersion) {
+    loginVersion.innerText = `Versión ${APP_VERSION}`;
+  }
 }
 
 function cerrarSesion() {
@@ -499,7 +543,7 @@ function renderTicketIndividual(data) {
         <strong>Mensaje automático:</strong>
         <p>${data.mensaje || 'Sin mensaje disponible.'}</p>
       </div>
-      ${data.modo === 'ticket' ? renderTimelineHorizontal(data.ticket) : ''}
+      ${data.ticket ? renderTimelineHorizontal(data.ticket) : ''}
     `
     : `<div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>`;
 
@@ -680,20 +724,12 @@ function renderReglas(reglas) {
 }
 
 function renderClientes(clientes) {
-  const filtro = buscarClientes.value.trim();
-
-  const filtrados = !filtro
-    ? clientes
-    : clientes.filter((cliente) =>
-        coincideBusqueda(`${cliente.nombre_empresa} ${cliente.rut_empresa}`, filtro)
-      );
-
-  if (!filtrados.length) {
-    listaClientes.innerHTML = '<p>No hay clientes que coincidan con la búsqueda.</p>';
+  if (!clientes.length) {
+    listaClientes.innerHTML = '<p>No hay clientes para esta búsqueda.</p>';
     return;
   }
 
-  listaClientes.innerHTML = filtrados.map((cliente) => `
+  listaClientes.innerHTML = clientes.map((cliente) => `
     <button type="button" class="regla-item cliente-item" data-id="${cliente.id}">
       <strong>#${cliente.id}</strong> - ${cliente.nombre_empresa}
       <small>${cliente.rut_empresa} | ${cliente.activo ? 'Activo' : 'Inactivo'} | ${cliente.enlistado ? 'Enlistado' : 'No enlistado'}</small>
@@ -719,6 +755,12 @@ function renderClientes(clientes) {
       await cargarServiciosCliente(cliente.id);
     });
   });
+}
+
+function actualizarPaginacionClientes() {
+  clientesPaginaInfo.innerText = `Página ${clientesPagination.page} de ${clientesPagination.total_pages} · ${clientesPagination.total} resultados`;
+  btnClientesPrev.disabled = !clientesPagination.has_prev;
+  btnClientesNext.disabled = !clientesPagination.has_next;
 }
 
 function renderServicios(servicios) {
@@ -806,6 +848,10 @@ function renderUsuarios(usuarios) {
 
 // LOGIN
 document.addEventListener('DOMContentLoaded', () => {
+  if (loginVersion) {
+    loginVersion.innerText = `Versión ${APP_VERSION}`;
+  }
+
   const sesionGuardada = leerSesion();
   if (sesionGuardada?.usuario && sesionGuardada?.cliente) {
     session = sesionGuardada;
@@ -1051,11 +1097,12 @@ formEditarRegla.addEventListener('submit', async (e) => {
 });
 
 // CLIENTES
-async function cargarClientesAdmin() {
+async function cargarClientesAdmin(page = 1) {
   listaClientes.innerHTML = 'Cargando clientes...';
 
   try {
-    const res = await fetch('/api/clientes');
+    const q = buscarClientes.value.trim();
+    const res = await fetch(`/api/clientes?q=${encodeURIComponent(q)}&page=${page}&limit=20`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -1064,7 +1111,10 @@ async function cargarClientesAdmin() {
     }
 
     clientesCache = data.clientes || [];
+    clientesPagination = data.pagination || clientesPagination;
+
     renderClientes(clientesCache);
+    actualizarPaginacionClientes();
   } catch (error) {
     listaClientes.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -1106,7 +1156,7 @@ formNuevoCliente.addEventListener('submit', async (e) => {
     nuevoClienteEnlistado.checked = true;
 
     setResultado(adminNuevoClienteResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
-    await cargarClientesAdmin();
+    await cargarClientesAdmin(1);
     await cargarClientesParaSelectUsuario();
   } catch (error) {
     setResultado(adminNuevoClienteResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
@@ -1143,7 +1193,7 @@ formEditarCliente.addEventListener('submit', async (e) => {
     }
 
     setResultado(adminClienteResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
-    await cargarClientesAdmin();
+    await cargarClientesAdmin(clientesPagination.page);
     await cargarClientesParaSelectUsuario();
   } catch (error) {
     setResultado(adminClienteResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
@@ -1255,7 +1305,7 @@ formEditarServicio.addEventListener('submit', async (e) => {
 // USUARIOS
 async function cargarClientesParaSelectUsuario() {
   try {
-    const res = await fetch('/api/clientes');
+    const res = await fetch('/api/clientes?mode=select');
     const data = await res.json();
 
     if (!res.ok || !data.clientes) return;

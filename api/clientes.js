@@ -1,122 +1,70 @@
-﻿import { supabase } from '../config/supabase.js';
+﻿import { createClient } from '@supabase/supabase-js';
 
-async function obtenerClientes(res) {
-  const { data, error } = await supabase
-    .from('clientes_demo')
-    .select('*')
-    .order('id', { ascending: true });
-
-  if (error) {
-    return res.status(500).json({
-      error: 'Error obteniendo clientes',
-      detalle: error.message
-    });
-  }
-
-  return res.status(200).json({
-    ok: true,
-    clientes: data
-  });
-}
-
-async function crearCliente(body, res) {
-  const { nombre_empresa, rut_empresa, activo, enlistado } = body || {};
-
-  if (!nombre_empresa || !rut_empresa || typeof activo !== 'boolean' || typeof enlistado !== 'boolean') {
-    return res.status(400).json({
-      error: 'Datos inválidos para crear cliente'
-    });
-  }
-
-  const { data, error } = await supabase
-    .from('clientes_demo')
-    .insert([
-      {
-        nombre_empresa,
-        rut_empresa,
-        activo,
-        enlistado
-      }
-    ])
-    .select()
-    .single();
-
-  if (error) {
-    return res.status(500).json({
-      error: 'Error creando cliente',
-      detalle: error.message
-    });
-  }
-
-  return res.status(201).json({
-    ok: true,
-    cliente: data,
-    mensaje: 'Cliente creado correctamente'
-  });
-}
-
-async function actualizarCliente(body, res) {
-  const { id, activo, enlistado } = body || {};
-
-  if (!id || typeof activo !== 'boolean' || typeof enlistado !== 'boolean') {
-    return res.status(400).json({
-      error: 'Datos inválidos para actualizar el cliente'
-    });
-  }
-
-  const { data, error } = await supabase
-    .from('clientes_demo')
-    .update({
-      activo,
-      enlistado
-    })
-    .eq('id', Number(id))
-    .select()
-    .single();
-
-  if (error) {
-    return res.status(500).json({
-      error: 'Error actualizando cliente',
-      detalle: error.message
-    });
-  }
-
-  return res.status(200).json({
-    ok: true,
-    cliente: data,
-    mensaje: 'Cliente actualizado correctamente'
-  });
-}
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      return await obtenerClientes(res);
-    }
+      const { search = '', page = 1, limit = 20 } = req.query;
 
-    if (req.method === 'POST') {
-      const { action } = req.body || {};
+      const from = (page - 1) * limit;
+      const to = from + Number(limit) - 1;
 
-      if (action === 'crear') {
-        return await crearCliente(req.body, res);
+      let query = supabase
+        .from('clientes')
+        .select('*', { count: 'exact' });
+
+      if (search) {
+        query = query.or(
+          `nombre_empresa.ilike.%${search}%,rut_empresa.ilike.%${search}%`
+        );
       }
 
-      if (action === 'actualizar') {
-        return await actualizarCliente(req.body, res);
-      }
+      const { data, error, count } = await query.range(from, to);
 
-      return res.status(400).json({
-        error: 'Acción no válida. Usa action="crear" o action="actualizar"'
+      if (error) throw error;
+
+      return res.status(200).json({
+        clientes: data,
+        total: count,
+        page: Number(page),
+        total_pages: Math.ceil(count / limit)
       });
     }
 
-    return res.status(405).json({
-      error: 'Método no permitido'
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error: 'Error interno',
-      detalle: error.message
-    });
+    if (req.method === 'POST') {
+      const body = req.body;
+
+      if (body.action === 'crear') {
+        const { data, error } = await supabase
+          .from('clientes')
+          .insert([body])
+          .select();
+
+        if (error) throw error;
+
+        return res.status(200).json({ mensaje: 'Cliente creado', data });
+      }
+
+      if (body.action === 'actualizar') {
+        const { id, ...update } = body;
+
+        const { error } = await supabase
+          .from('clientes')
+          .update(update)
+          .eq('id', id);
+
+        if (error) throw error;
+
+        return res.status(200).json({ mensaje: 'Cliente actualizado' });
+      }
+    }
+
+    res.status(405).json({ error: 'Método no permitido' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 }

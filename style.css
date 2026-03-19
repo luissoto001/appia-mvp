@@ -524,6 +524,44 @@
     margin-bottom: 12px;
   }
   
+  .login-card {
+    max-width: 520px;
+    margin: 48px auto;
+  }
+  
+  .login-version {
+    display: inline-block;
+    margin-bottom: 18px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: var(--color-secundario);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  
+  .paginacion-linea {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--color-borde);
+    border-radius: 12px;
+    background: #f8fbff;
+  }
+  
+  .paginacion-linea span {
+    font-size: 14px;
+    color: var(--color-texto-suave);
+  }
+  
+  .paginacion-linea button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
   @media (max-width: 1100px) {
     .admin-grid {
       grid-template-columns: 1fr;
@@ -567,5 +605,10 @@
     .seccion-header {
       flex-direction: column;
       align-items: flex-start;
+    }
+  
+    .paginacion-linea {
+      flex-direction: column;
+      align-items: stretch;
     }
   }
