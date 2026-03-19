@@ -179,6 +179,31 @@
               <div class="card-interno">
                 <h3>Clientes existentes</h3>
                 <div id="listaClientes" class="lista-reglas"></div>
+
+                <hr>
+
+                <h3>Nuevo cliente</h3>
+                <form id="formNuevoCliente" class="form">
+                  <label for="nuevo_cliente_nombre">Nombre empresa</label>
+                  <input id="nuevo_cliente_nombre" required>
+
+                  <label for="nuevo_cliente_rut">RUT</label>
+                  <input id="nuevo_cliente_rut" required>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_cliente_activo" checked>
+                    Cliente activo
+                  </label>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_cliente_enlistado" checked>
+                    Cliente enlistado
+                  </label>
+
+                  <button type="submit">Crear cliente</button>
+                </form>
+
+                <div id="adminNuevoClienteResultado" class="resultado oculto"></div>
               </div>
 
               <div class="card-interno">
@@ -217,6 +242,38 @@
               <div class="card-interno">
                 <h3>Usuarios existentes</h3>
                 <div id="listaUsuarios" class="lista-reglas"></div>
+
+                <hr>
+
+                <h3>Nuevo usuario</h3>
+                <form id="formNuevoUsuario" class="form">
+                  <label for="nuevo_usuario_cliente">Cliente</label>
+                  <select id="nuevo_usuario_cliente" required></select>
+
+                  <label for="nuevo_usuario_nombre">Nombre usuario</label>
+                  <input id="nuevo_usuario_nombre" required>
+
+                  <label for="nuevo_usuario_email">Email</label>
+                  <input id="nuevo_usuario_email" type="email" required>
+
+                  <label for="nuevo_usuario_password">Contraseña</label>
+                  <input id="nuevo_usuario_password" required>
+
+                  <label for="nuevo_usuario_rol">Rol</label>
+                  <select id="nuevo_usuario_rol" required>
+                    <option value="cliente">cliente</option>
+                    <option value="admin">admin</option>
+                  </select>
+
+                  <label class="check-line">
+                    <input type="checkbox" id="nuevo_usuario_activo" checked>
+                    Usuario activo
+                  </label>
+
+                  <button type="submit">Crear usuario</button>
+                </form>
+
+                <div id="adminNuevoUsuarioResultado" class="resultado oculto"></div>
               </div>
 
               <div class="card-interno">
