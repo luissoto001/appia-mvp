@@ -13,9 +13,14 @@ async function obtenerUsuarios(res) {
     });
   }
 
+  const usuariosSanitizados = (data || []).map((usuario) => ({
+    ...usuario,
+    password: ''
+  }));
+
   return res.status(200).json({
     ok: true,
-    usuarios: data
+    usuarios: usuariosSanitizados
   });
 }
 
@@ -52,7 +57,10 @@ async function crearUsuario(body, res) {
 
   return res.status(201).json({
     ok: true,
-    usuario: data,
+    usuario: {
+      ...data,
+      password: ''
+    },
     mensaje: 'Usuario creado correctamente'
   });
 }
@@ -60,18 +68,23 @@ async function crearUsuario(body, res) {
 async function actualizarUsuario(body, res) {
   const { id, password, activo } = body || {};
 
-  if (!id || typeof password !== 'string' || typeof activo !== 'boolean') {
+  if (!id || typeof activo !== 'boolean') {
     return res.status(400).json({
       error: 'Datos inválidos para actualizar el usuario'
     });
   }
 
+  const payload = {
+    activo
+  };
+
+  if (typeof password === 'string' && password.trim() !== '') {
+    payload.password = password.trim();
+  }
+
   const { data, error } = await supabase
     .from('usuarios_demo')
-    .update({
-      password,
-      activo
-    })
+    .update(payload)
     .eq('id', Number(id))
     .select()
     .single();
@@ -85,7 +98,10 @@ async function actualizarUsuario(body, res) {
 
   return res.status(200).json({
     ok: true,
-    usuario: data,
+    usuario: {
+      ...data,
+      password: ''
+    },
     mensaje: 'Usuario actualizado correctamente'
   });
 }

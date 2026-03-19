@@ -353,6 +353,18 @@ function actualizarModoConsulta() {
   }
 }
 
+function validarEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function validarRut(rut) {
+  return /^\d{7,8}-[\dkK]$/.test(rut);
+}
+
+function validarBpi(bpi) {
+  return /^BPI[0-9A-Za-z]+$/.test(bpi);
+}
+
 function sumarMinutos(fechaBase, minutos) {
   return new Date(new Date(fechaBase).getTime() + minutos * 60000);
 }
@@ -389,19 +401,11 @@ function construirTimelineDemo(ticket) {
   });
 
   if (ticket.estado === 'Ingresado') {
-    return {
-      actual: 'Ticket ingresado',
-      eventos,
-      actualIndex: 0
-    };
+    return { actual: 'Ticket ingresado', eventos, actualIndex: 0 };
   }
 
   if (ticket.estado === 'En proceso') {
-    return {
-      actual: 'En proceso',
-      eventos,
-      actualIndex: 2
-    };
+    return { actual: 'En proceso', eventos, actualIndex: 2 };
   }
 
   if (ticket.estado === 'Derivado') {
@@ -411,12 +415,7 @@ function construirTimelineDemo(ticket) {
       titulo: 'Ticket derivado',
       detalle: 'Escalado a nueva célula de atención'
     });
-
-    return {
-      actual: 'Derivado',
-      eventos,
-      actualIndex: 3
-    };
+    return { actual: 'Derivado', eventos, actualIndex: 3 };
   }
 
   if (ticket.estado === 'Resuelto' || ticket.estado === 'Cerrado') {
@@ -426,19 +425,10 @@ function construirTimelineDemo(ticket) {
       titulo: ticket.estado === 'Cerrado' ? 'Ticket cerrado' : 'Ticket resuelto',
       detalle: `Estado final: ${ticket.estado}`
     });
-
-    return {
-      actual: ticket.estado,
-      eventos,
-      actualIndex: 3
-    };
+    return { actual: ticket.estado, eventos, actualIndex: 3 };
   }
 
-  return {
-    actual: ticket.estado,
-    eventos,
-    actualIndex: eventos.length - 1
-  };
+  return { actual: ticket.estado, eventos, actualIndex: eventos.length - 1 };
 }
 
 function renderTimelineHorizontal(ticket) {
@@ -668,8 +658,13 @@ consultaForm.addEventListener('submit', async (e) => {
     };
 
     if (modo === 'bpi') {
+      const bpi = bpiConsulta.value.trim();
+      if (!validarBpi(bpi)) {
+        setResultado(resultadoConsulta, 'estado-error', '<strong>Error:</strong> El BPI debe comenzar con "BPI".');
+        return;
+      }
       body.action = 'consultar_por_bpi';
-      body.bpi = bpiConsulta.value.trim();
+      body.bpi = bpi;
     } else if (modo === 'ticket') {
       body.action = 'consultar_por_ticket';
       body.ticket_numero = ticketConsulta.value.trim();
@@ -703,6 +698,12 @@ consultaForm.addEventListener('submit', async (e) => {
 crearForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const bpi = document.getElementById('bpi_creacion').value.trim();
+  if (!validarBpi(bpi)) {
+    setResultado(resultadoCreacion, 'estado-error', '<strong>Error:</strong> El BPI debe comenzar con "BPI".');
+    return;
+  }
+
   setResultado(resultadoCreacion, '', 'Creando ticket...');
 
   try {
@@ -712,7 +713,7 @@ crearForm.addEventListener('submit', async (e) => {
       body: JSON.stringify({
         action: 'crear',
         rut_empresa: session.cliente.rut_empresa,
-        bpi: document.getElementById('bpi_creacion').value.trim(),
+        bpi,
         tipo_solicitud: document.getElementById('tipo_solicitud').value,
         descripcion: document.getElementById('descripcion_creacion').value.trim()
       })
@@ -933,6 +934,12 @@ async function cargarClientesAdmin() {
 formNuevoCliente.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const rut = nuevoClienteRut.value.trim();
+  if (!validarRut(rut)) {
+    setResultado(adminNuevoClienteResultado, 'estado-error', '<strong>Error:</strong> El RUT debe venir con formato 12345678-9.');
+    return;
+  }
+
   setResultado(adminNuevoClienteResultado, '', 'Creando cliente...');
 
   try {
@@ -942,7 +949,7 @@ formNuevoCliente.addEventListener('submit', async (e) => {
       body: JSON.stringify({
         action: 'crear',
         nombre_empresa: nuevoClienteNombre.value.trim(),
-        rut_empresa: nuevoClienteRut.value.trim(),
+        rut_empresa: rut,
         activo: nuevoClienteActivo.checked,
         enlistado: nuevoClienteEnlistado.checked
       })
@@ -969,6 +976,11 @@ formNuevoCliente.addEventListener('submit', async (e) => {
 
 formEditarCliente.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  if (!clienteActivoAdmin.checked) {
+    const confirmado = confirm('Vas a desactivar este cliente. ¿Deseas continuar?');
+    if (!confirmado) return;
+  }
 
   setResultado(adminClienteResultado, '', 'Guardando cambios...');
 
@@ -1051,6 +1063,12 @@ formNuevoServicio.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!clienteSeleccionadoId) return;
 
+  const bpi = nuevoServicioBpi.value.trim();
+  if (!validarBpi(bpi)) {
+    setResultado(adminNuevoServicioResultado, 'estado-error', '<strong>Error:</strong> El BPI debe comenzar con "BPI".');
+    return;
+  }
+
   setResultado(adminNuevoServicioResultado, '', 'Creando servicio/BPI...');
 
   try {
@@ -1060,7 +1078,7 @@ formNuevoServicio.addEventListener('submit', async (e) => {
       body: JSON.stringify({
         action: 'crear',
         cliente_id: clienteSeleccionadoId,
-        bpi: nuevoServicioBpi.value.trim(),
+        bpi,
         nombre_servicio: nuevoServicioNombre.value.trim(),
         direccion: nuevoServicioDireccion.value.trim(),
         activo: nuevoServicioActivo.checked
@@ -1086,6 +1104,11 @@ formNuevoServicio.addEventListener('submit', async (e) => {
 
 formEditarServicio.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+  if (!servicioActivoAdmin.checked) {
+    const confirmado = confirm('Vas a desactivar este servicio/BPI. ¿Deseas continuar?');
+    if (!confirmado) return;
+  }
 
   setResultado(adminServicioResultado, '', 'Guardando servicio...');
 
@@ -1166,7 +1189,7 @@ async function cargarUsuariosAdmin() {
         usuarioNombreAdmin.value = usuario.nombre_usuario || '';
         usuarioEmailAdmin.value = usuario.email || '';
         usuarioRolAdmin.value = usuario.rol || '';
-        usuarioPasswordAdmin.value = usuario.password || '';
+        usuarioPasswordAdmin.value = '';
         usuarioActivoAdmin.checked = !!usuario.activo;
 
         textoSinUsuarioSeleccionado.classList.add('oculto');
@@ -1181,6 +1204,17 @@ async function cargarUsuariosAdmin() {
 formNuevoUsuario.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const email = nuevoUsuarioEmail.value.trim();
+  if (!validarEmail(email)) {
+    setResultado(adminNuevoUsuarioResultado, 'estado-error', '<strong>Error:</strong> El email no tiene un formato válido.');
+    return;
+  }
+
+  if (nuevoUsuarioPassword.value.trim().length < 4) {
+    setResultado(adminNuevoUsuarioResultado, 'estado-error', '<strong>Error:</strong> La contraseña debe tener al menos 4 caracteres.');
+    return;
+  }
+
   setResultado(adminNuevoUsuarioResultado, '', 'Creando usuario...');
 
   try {
@@ -1191,7 +1225,7 @@ formNuevoUsuario.addEventListener('submit', async (e) => {
         action: 'crear',
         cliente_id: Number(nuevoUsuarioCliente.value),
         nombre_usuario: nuevoUsuarioNombre.value.trim(),
-        email: nuevoUsuarioEmail.value.trim(),
+        email,
         password: nuevoUsuarioPassword.value.trim(),
         rol: nuevoUsuarioRol.value,
         activo: nuevoUsuarioActivo.checked
@@ -1218,6 +1252,18 @@ formNuevoUsuario.addEventListener('submit', async (e) => {
 formEditarUsuario.addEventListener('submit', async (e) => {
   e.preventDefault();
 
+  const nuevaPassword = usuarioPasswordAdmin.value.trim();
+
+  if (!usuarioActivoAdmin.checked) {
+    const confirmado = confirm('Vas a desactivar este usuario. ¿Deseas continuar?');
+    if (!confirmado) return;
+  }
+
+  if (nuevaPassword !== '' && nuevaPassword.length < 4) {
+    setResultado(adminUsuarioResultado, 'estado-error', '<strong>Error:</strong> La nueva contraseña debe tener al menos 4 caracteres.');
+    return;
+  }
+
   setResultado(adminUsuarioResultado, '', 'Guardando usuario...');
 
   try {
@@ -1227,7 +1273,7 @@ formEditarUsuario.addEventListener('submit', async (e) => {
       body: JSON.stringify({
         action: 'actualizar',
         id: Number(usuarioIdAdmin.value),
-        password: usuarioPasswordAdmin.value.trim(),
+        password: nuevaPassword,
         activo: usuarioActivoAdmin.checked
       })
     });
@@ -1239,6 +1285,7 @@ formEditarUsuario.addEventListener('submit', async (e) => {
       return;
     }
 
+    usuarioPasswordAdmin.value = '';
     setResultado(adminUsuarioResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
     await cargarUsuariosAdmin();
   } catch (error) {
