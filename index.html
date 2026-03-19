@@ -12,7 +12,7 @@
     <main class="main" id="loginContainer">
       <section class="card login-card">
         <h2>Ingreso al portal</h2>
-        <div id="loginVersion" class="login-version">Versión 0.3.0</div>
+        <div id="loginVersion" class="login-version">Versión 0.4.0</div>
 
         <form id="loginForm" class="form">
           <label for="login_email">Email</label>
@@ -498,8 +498,9 @@
                 </div>
               </div>
 
-              <div style="margin-top: 14px;">
+              <div class="reportes-toolbar">
                 <button class="accion-btn" id="btnAplicarFiltros" type="button">Aplicar filtros</button>
+                <button class="btn-secundario" id="btnExportarCsv" type="button">Exportar CSV</button>
               </div>
             </div>
 
@@ -519,6 +520,18 @@
               <div class="kpi-card">
                 <span>Clientes con tickets</span>
                 <strong id="kpiClientesConTickets">0</strong>
+              </div>
+            </div>
+
+            <div class="admin-grid charts-grid">
+              <div class="card-interno chart-card">
+                <h3>Distribución por estado</h3>
+                <canvas id="chartEstados"></canvas>
+              </div>
+
+              <div class="card-interno chart-card">
+                <h3>Distribución por tipología</h3>
+                <canvas id="chartTipologias"></canvas>
               </div>
             </div>
 
@@ -563,6 +576,7 @@
 
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

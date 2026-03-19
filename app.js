@@ -1,6 +1,9 @@
-const APP_VERSION = '0.3.0';
+const APP_VERSION = '0.4.0';
 
 let session = null;
+let chartEstados = null;
+let chartTipologias = null;
+let ultimoDetalleReportes = [];
 
 // Login / layout
 const loginForm = document.getElementById('loginForm');
@@ -177,6 +180,7 @@ const adminReporteResultado = document.getElementById('adminReporteResultado');
 const detalleReportesVacio = document.getElementById('detalleReportesVacio');
 const detalleReportesLista = document.getElementById('detalleReportesLista');
 const btnCerrarDetalleReportes = document.getElementById('btnCerrarDetalleReportes');
+const btnExportarCsv = document.getElementById('btnExportarCsv');
 
 const kpiCardTotal = document.getElementById('kpiCardTotal');
 const kpiCardAbiertos = document.getElementById('kpiCardAbiertos');
@@ -187,6 +191,9 @@ const filtroFechaHasta = document.getElementById('filtroFechaHasta');
 const filtroCliente = document.getElementById('filtroCliente');
 const filtroEstado = document.getElementById('filtroEstado');
 const btnAplicarFiltros = document.getElementById('btnAplicarFiltros');
+
+const chartEstadosCanvas = document.getElementById('chartEstados');
+const chartTipologiasCanvas = document.getElementById('chartTipologias');
 
 let clienteSeleccionadoId = null;
 
@@ -276,6 +283,7 @@ tabReportes.onclick = async () => {
 modoConsulta.addEventListener('change', actualizarModoConsulta);
 btnCerrarDetalleReportes.onclick = limpiarDetalleReportes;
 btnAplicarFiltros.onclick = () => cargarReportesAdmin();
+btnExportarCsv.onclick = () => exportarDetalleCsv();
 
 kpiCardTotal.onclick = () => cargarDetalleReportes('todos');
 kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
@@ -745,12 +753,140 @@ function renderDetalleReportes(tickets) {
 }
 
 function limpiarDetalleReportes() {
+  ultimoDetalleReportes = [];
   detalleReportesLista.innerHTML = '';
   detalleReportesVacio.classList.remove('oculto');
   btnCerrarDetalleReportes.classList.add('oculto');
 }
 
-async function cargarDetalleReportes(filtro, valor = '') {
+function destruirGraficos() {
+  if (chartEstados) {
+    chartEstados.destroy();
+    chartEstados = null;
+  }
+
+  if (chartTipologias) {
+    chartTipologias.destroy();
+    chartTipologias = null;
+  }
+}
+
+function renderGraficosReportes(data) {
+  destruirGraficos();
+
+  if (!window.Chart) {
+    return;
+  }
+
+  const etiquetasEstados = (data.por_estado || []).map((i) => i.nombre);
+  const valoresEstados = (data.por_estado || []).map((i) => i.total);
+
+  const etiquetasTipologias = (data.por_tipologia || []).map((i) => i.nombre);
+  const valoresTipologias = (data.por_tipologia || []).map((i) => i.total);
+
+  chartEstados = new Chart(chartEstadosCanvas, {
+    type: 'doughnut',
+    data: {
+      labels: etiquetasEstados,
+      datasets: [
+        {
+          data: valoresEstados,
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom'
+        }
+      }
+    }
+  });
+
+  chartTipologias = new Chart(chartTipologiasCanvas, {
+    type: 'bar',
+    data: {
+      labels: etiquetasTipologias,
+      datasets: [
+        {
+          data: valoresTipologias,
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0
+          }
+        }
+      }
+    }
+  });
+}
+
+function exportarCsvDesdeTickets(tickets, nombreArchivo = 'appia-reportes.csv') {
+  if (!tickets || tickets.length === 0) {
+    alert('No hay datos para exportar.');
+    return;
+  }
+
+  const headers = [
+    'ticket_numero',
+    'cliente_nombre',
+    'cliente_id',
+    'estado',
+    'tipologia',
+    'bpi',
+    'area_resolutora',
+    'descripcion',
+    'created_at'
+  ];
+
+  const escapeCsv = (value) => {
+    const text = String(value ?? '');
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+
+  const rows = tickets.map((ticket) =>
+    headers.map((header) => escapeCsv(ticket[header])).join(',')
+  );
+
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nombreArchivo;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function exportarDetalleCsv() {
+  if (ultimoDetalleReportes.length > 0) {
+    exportarCsvDesdeTickets(ultimoDetalleReportes, 'appia-detalle-reportes.csv');
+    return;
+  }
+
+  cargarDetalleReportes('todos', '', true);
+}
+
+async function cargarDetalleReportes(filtro, valor = '', exportarLuego = false) {
   detalleReportesVacio.classList.add('oculto');
   btnCerrarDetalleReportes.classList.remove('oculto');
   detalleReportesLista.innerHTML = 'Cargando detalle...';
@@ -772,7 +908,12 @@ async function cargarDetalleReportes(filtro, valor = '') {
       return;
     }
 
-    detalleReportesLista.innerHTML = renderDetalleReportes(data.tickets);
+    ultimoDetalleReportes = data.tickets || [];
+    detalleReportesLista.innerHTML = renderDetalleReportes(ultimoDetalleReportes);
+
+    if (exportarLuego) {
+      exportarCsvDesdeTickets(ultimoDetalleReportes, 'appia-reportes-filtrados.csv');
+    }
   } catch (error) {
     detalleReportesLista.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -1577,6 +1718,8 @@ async function cargarReportesAdmin() {
     reportePorTipologia.innerHTML = renderBarras(data.por_tipologia, 'tipologia');
     reportePorCliente.innerHTML = renderBarras(data.por_cliente, 'cliente');
     reporteRecientes.innerHTML = renderRecientes(data.recientes);
+
+    renderGraficosReportes(data);
 
     document.querySelectorAll('.barra-click').forEach((btn) => {
       btn.addEventListener('click', () => {
