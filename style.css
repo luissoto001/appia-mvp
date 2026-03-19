@@ -79,7 +79,8 @@
     margin-bottom: 24px;
   }
   
-  .card h2 {
+  .card h2,
+  .card h3 {
     margin-top: 0;
     color: var(--color-primario);
   }
@@ -231,37 +232,15 @@
     gap: 6px;
   }
   
-  @media (max-width: 640px) {
-    .brand {
-      align-items: flex-start;
-    }
-  
-    .brand h1 {
-      font-size: 22px;
-    }
-  
-    .card {
-      padding: 18px;
-    }
-  
-    .form input,
-    .form select,
-    .form textarea,
-    .form button,
-    .accion-btn {
-      font-size: 15px;
-    }
-  
-    .btn-secundario {
-      width: 100%;
-    }
-  }
   #btnCerrarSesion {
     margin-left: auto;
   }
-
-  #btnCerrarSesion {
-    margin-left: auto;
+  
+  .admin-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
   }
   
   .admin-grid {
@@ -308,5 +287,31 @@
   @media (max-width: 900px) {
     .admin-grid {
       grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .brand {
+      align-items: flex-start;
+    }
+  
+    .brand h1 {
+      font-size: 22px;
+    }
+  
+    .card {
+      padding: 18px;
+    }
+  
+    .form input,
+    .form select,
+    .form textarea,
+    .form button,
+    .accion-btn {
+      font-size: 15px;
+    }
+  
+    .btn-secundario {
+      width: 100%;
     }
   }

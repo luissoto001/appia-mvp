@@ -44,6 +44,22 @@ const reglaHoras = document.getElementById('regla_horas');
 const reglaMensaje = document.getElementById('regla_mensaje');
 const reglaActivo = document.getElementById('regla_activo');
 
+const tabMensajes = document.getElementById('tabMensajes');
+const tabClientes = document.getElementById('tabClientes');
+const adminMensajesPanel = document.getElementById('adminMensajesPanel');
+const adminClientesPanel = document.getElementById('adminClientesPanel');
+
+const listaClientes = document.getElementById('listaClientes');
+const formEditarCliente = document.getElementById('formEditarCliente');
+const adminClienteResultado = document.getElementById('adminClienteResultado');
+const textoSinClienteSeleccionado = document.getElementById('textoSinClienteSeleccionado');
+
+const clienteIdAdmin = document.getElementById('cliente_id_admin');
+const clienteNombreAdmin = document.getElementById('cliente_nombre_admin');
+const clienteRutAdmin = document.getElementById('cliente_rut_admin');
+const clienteActivoAdmin = document.getElementById('cliente_activo_admin');
+const clienteEnlistadoAdmin = document.getElementById('cliente_enlistado_admin');
+
 // botones navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
   ocultarTodasLasSecciones();
@@ -58,6 +74,7 @@ document.getElementById('btnMostrarCreacion').onclick = () => {
 btnMostrarAdmin.onclick = async () => {
   ocultarTodasLasSecciones();
   seccionAdmin.classList.remove('oculto');
+  mostrarTabMensajes();
   await cargarReglasAdmin();
 };
 
@@ -65,6 +82,12 @@ document.getElementById('btnVolverConsulta').onclick = volverMenu;
 document.getElementById('btnVolverCreacion').onclick = volverMenu;
 document.getElementById('btnVolverAdmin').onclick = volverMenu;
 btnCerrarSesion.onclick = cerrarSesion;
+
+tabMensajes.onclick = mostrarTabMensajes;
+tabClientes.onclick = async () => {
+  mostrarTabClientes();
+  await cargarClientesAdmin();
+};
 
 // formularios
 const consultaForm = document.getElementById('consultaForm');
@@ -166,6 +189,9 @@ function mostrarLogin() {
   adminResultado.classList.add('oculto');
   adminResultado.innerHTML = '';
 
+  adminClienteResultado.classList.add('oculto');
+  adminClienteResultado.innerHTML = '';
+
   volverMenu();
 }
 
@@ -173,6 +199,16 @@ function cerrarSesion() {
   session = null;
   limpiarSesion();
   mostrarLogin();
+}
+
+function mostrarTabMensajes() {
+  adminMensajesPanel.classList.remove('oculto');
+  adminClientesPanel.classList.add('oculto');
+}
+
+function mostrarTabClientes() {
+  adminMensajesPanel.classList.add('oculto');
+  adminClientesPanel.classList.remove('oculto');
 }
 
 async function cargarReglasAdmin() {
@@ -227,6 +263,58 @@ function cargarReglaEnFormulario(regla) {
 
   adminResultado.classList.add('oculto');
   adminResultado.innerHTML = '';
+}
+
+async function cargarClientesAdmin() {
+  if (session?.usuario?.rol !== 'admin') return;
+
+  listaClientes.innerHTML = 'Cargando clientes...';
+
+  try {
+    const res = await fetch('/api/obtener-clientes');
+    const data = await res.json();
+
+    if (!res.ok) {
+      listaClientes.innerHTML = `<div class="resultado estado-error">No fue posible cargar clientes: ${data.error || 'Error'}</div>`;
+      return;
+    }
+
+    if (!data.clientes || data.clientes.length === 0) {
+      listaClientes.innerHTML = '<p>No hay clientes registrados.</p>';
+      return;
+    }
+
+    listaClientes.innerHTML = data.clientes.map((cliente) => `
+      <button type="button" class="regla-item cliente-item" data-id="${cliente.id}">
+        <strong>#${cliente.id}</strong> - ${cliente.nombre_empresa}
+        <br>
+        <small>${cliente.rut_empresa} | ${cliente.activo ? 'Activo' : 'Inactivo'} | ${cliente.enlistado ? 'Enlistado' : 'No enlistado'}</small>
+      </button>
+    `).join('');
+
+    document.querySelectorAll('.cliente-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cliente = data.clientes.find((c) => c.id === Number(btn.dataset.id));
+        if (cliente) cargarClienteEnFormulario(cliente);
+      });
+    });
+  } catch (error) {
+    listaClientes.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
+  }
+}
+
+function cargarClienteEnFormulario(cliente) {
+  clienteIdAdmin.value = cliente.id;
+  clienteNombreAdmin.value = cliente.nombre_empresa || '';
+  clienteRutAdmin.value = cliente.rut_empresa || '';
+  clienteActivoAdmin.checked = !!cliente.activo;
+  clienteEnlistadoAdmin.checked = !!cliente.enlistado;
+
+  textoSinClienteSeleccionado.classList.add('oculto');
+  formEditarCliente.classList.remove('oculto');
+
+  adminClienteResultado.classList.add('oculto');
+  adminClienteResultado.innerHTML = '';
 }
 
 // restaurar sesión al cargar
@@ -481,5 +569,42 @@ formEditarRegla.addEventListener('submit', async (e) => {
   } catch (error) {
     adminResultado.classList.add('estado-error');
     adminResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
+  }
+});
+
+// EDITAR CLIENTE
+formEditarCliente.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  adminClienteResultado.className = 'resultado';
+  adminClienteResultado.classList.remove('oculto', 'estado-ok', 'estado-error');
+  adminClienteResultado.innerHTML = 'Guardando cambios...';
+
+  try {
+    const res = await fetch('/api/actualizar-cliente', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: Number(clienteIdAdmin.value),
+        activo: clienteActivoAdmin.checked,
+        enlistado: clienteEnlistadoAdmin.checked
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      adminClienteResultado.classList.add('estado-error');
+      adminClienteResultado.innerHTML = `<strong>Error:</strong> ${data.error || 'No fue posible guardar'}`;
+      return;
+    }
+
+    adminClienteResultado.classList.add('estado-ok');
+    adminClienteResultado.innerHTML = `<strong>OK:</strong> ${data.mensaje}`;
+
+    await cargarClientesAdmin();
+  } catch (error) {
+    adminClienteResultado.classList.add('estado-error');
+    adminClienteResultado.innerHTML = `<strong>Error:</strong> ${error.message}`;
   }
 });
