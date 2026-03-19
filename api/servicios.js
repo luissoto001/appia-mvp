@@ -1,19 +1,30 @@
 ﻿import { supabase } from '../config/supabase.js';
 
 async function obtenerServicios(req, res) {
-  const { cliente_id } = req.query || {};
+  const clienteId = Number(req.query?.cliente_id || 0);
+  const q = (req.query?.q || '').trim();
+  const page = Math.max(parseInt(req.query?.page || '1', 10), 1);
+  const limit = Math.min(Math.max(parseInt(req.query?.limit || '20', 10), 1), 100);
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
 
-  if (!cliente_id) {
+  if (!clienteId) {
     return res.status(400).json({
-      error: 'Debes indicar cliente_id'
+      error: 'cliente_id es obligatorio'
     });
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('servicios')
-    .select('*')
-    .eq('cliente_id', Number(cliente_id))
+    .select('*', { count: 'exact' })
+    .eq('cliente_id', clienteId)
     .order('id', { ascending: true });
+
+  if (q) {
+    query = query.or(`bpi.ilike.%${q}%,nombre_servicio.ilike.%${q}%,direccion.ilike.%${q}%`);
+  }
+
+  const { data, error, count } = await query.range(from, to);
 
   if (error) {
     return res.status(500).json({
@@ -22,14 +33,26 @@ async function obtenerServicios(req, res) {
     });
   }
 
+  const total = count || 0;
+  const total_pages = Math.max(Math.ceil(total / limit), 1);
+
   return res.status(200).json({
     ok: true,
-    servicios: data
+    servicios: data || [],
+    pagination: {
+      page,
+      limit,
+      total,
+      total_pages,
+      has_prev: page > 1,
+      has_next: page < total_pages
+    },
+    busqueda: q
   });
 }
 
 async function crearServicio(body, res) {
-  const { cliente_id, bpi, direccion, nombre_servicio, activo } = body || {};
+  const { cliente_id, bpi, nombre_servicio, direccion, activo } = body || {};
 
   if (!cliente_id || !bpi || !nombre_servicio || typeof activo !== 'boolean') {
     return res.status(400).json({
@@ -43,8 +66,8 @@ async function crearServicio(body, res) {
       {
         cliente_id: Number(cliente_id),
         bpi,
-        direccion: direccion || '',
         nombre_servicio,
+        direccion: direccion || '',
         activo
       }
     ])
@@ -61,7 +84,7 @@ async function crearServicio(body, res) {
   return res.status(201).json({
     ok: true,
     servicio: data,
-    mensaje: 'Servicio/BPI creado correctamente'
+    mensaje: 'Servicio creado correctamente'
   });
 }
 
@@ -70,7 +93,7 @@ async function actualizarServicio(body, res) {
 
   if (!id || !nombre_servicio || typeof activo !== 'boolean') {
     return res.status(400).json({
-      error: 'Datos inválidos para actualizar servicio'
+      error: 'Datos inválidos para actualizar el servicio'
     });
   }
 

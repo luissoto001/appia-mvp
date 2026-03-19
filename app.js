@@ -1,4 +1,4 @@
-const APP_VERSION = '0.2.1';
+const APP_VERSION = '0.2.2';
 
 let session = null;
 
@@ -69,6 +69,11 @@ const clientesPaginaInfo = document.getElementById('clientesPaginaInfo');
 const btnUsuariosPrev = document.getElementById('btnUsuariosPrev');
 const btnUsuariosNext = document.getElementById('btnUsuariosNext');
 const usuariosPaginaInfo = document.getElementById('usuariosPaginaInfo');
+
+// Paginación servicios
+const btnServiciosPrev = document.getElementById('btnServiciosPrev');
+const btnServiciosNext = document.getElementById('btnServiciosNext');
+const serviciosPaginaInfo = document.getElementById('serviciosPaginaInfo');
 
 // Reglas
 const listaReglas = document.getElementById('listaReglas');
@@ -203,8 +208,18 @@ let usuariosPagination = {
   has_next: false
 };
 
+let serviciosPagination = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  total_pages: 1,
+  has_prev: false,
+  has_next: false
+};
+
 let clientesSearchTimer = null;
 let usuariosSearchTimer = null;
+let serviciosSearchTimer = null;
 
 // Navegación
 document.getElementById('btnMostrarConsulta').onclick = () => {
@@ -259,7 +274,6 @@ kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
 kpiCardCerrados.onclick = () => cargarDetalleReportes('cerrados');
 
 buscarReglas.addEventListener('input', () => renderReglas(reglasCache));
-buscarServicios.addEventListener('input', () => renderServicios(serviciosCache));
 
 buscarClientes.addEventListener('input', () => {
   clearTimeout(clientesSearchTimer);
@@ -272,6 +286,15 @@ buscarUsuarios.addEventListener('input', () => {
   clearTimeout(usuariosSearchTimer);
   usuariosSearchTimer = setTimeout(() => {
     cargarUsuariosAdmin(1);
+  }, 350);
+});
+
+buscarServicios.addEventListener('input', () => {
+  clearTimeout(serviciosSearchTimer);
+  serviciosSearchTimer = setTimeout(() => {
+    if (clienteSeleccionadoId) {
+      cargarServiciosCliente(clienteSeleccionadoId, 1);
+    }
   }, 350);
 });
 
@@ -296,6 +319,18 @@ btnUsuariosPrev.addEventListener('click', async () => {
 btnUsuariosNext.addEventListener('click', async () => {
   if (usuariosPagination.has_next) {
     await cargarUsuariosAdmin(usuariosPagination.page + 1);
+  }
+});
+
+btnServiciosPrev.addEventListener('click', async () => {
+  if (clienteSeleccionadoId && serviciosPagination.has_prev) {
+    await cargarServiciosCliente(clienteSeleccionadoId, serviciosPagination.page - 1);
+  }
+});
+
+btnServiciosNext.addEventListener('click', async () => {
+  if (clienteSeleccionadoId && serviciosPagination.has_next) {
+    await cargarServiciosCliente(clienteSeleccionadoId, serviciosPagination.page + 1);
   }
 });
 
@@ -786,7 +821,8 @@ function renderClientes(clientes) {
       formEditarCliente.classList.remove('oculto');
       formNuevoServicio.classList.remove('oculto');
 
-      await cargarServiciosCliente(cliente.id);
+      buscarServicios.value = '';
+      await cargarServiciosCliente(cliente.id, 1);
     });
   });
 }
@@ -798,23 +834,12 @@ function actualizarPaginacionClientes() {
 }
 
 function renderServicios(servicios) {
-  const filtro = buscarServicios.value.trim();
-
-  const filtrados = !filtro
-    ? servicios
-    : servicios.filter((servicio) =>
-        coincideBusqueda(
-          `${servicio.bpi} ${servicio.nombre_servicio} ${servicio.direccion}`,
-          filtro
-        )
-      );
-
-  if (!filtrados.length) {
-    listaServiciosCliente.innerHTML = '<p>No hay servicios que coincidan con la búsqueda.</p>';
+  if (!servicios.length) {
+    listaServiciosCliente.innerHTML = '<p>No hay servicios para esta búsqueda.</p>';
     return;
   }
 
-  listaServiciosCliente.innerHTML = filtrados.map((servicio) => `
+  listaServiciosCliente.innerHTML = servicios.map((servicio) => `
     <button type="button" class="regla-item servicio-item" data-id="${servicio.id}">
       <strong>${servicio.bpi}</strong> - ${servicio.nombre_servicio}
       <small>${servicio.direccion || 'Sin dirección'} | ${servicio.activo ? 'Activo' : 'Inactivo'}</small>
@@ -836,6 +861,12 @@ function renderServicios(servicios) {
       formEditarServicio.classList.remove('oculto');
     });
   });
+}
+
+function actualizarPaginacionServicios() {
+  serviciosPaginaInfo.innerText = `Página ${serviciosPagination.page} de ${serviciosPagination.total_pages} · ${serviciosPagination.total} resultados`;
+  btnServiciosPrev.disabled = !serviciosPagination.has_prev;
+  btnServiciosNext.disabled = !serviciosPagination.has_next;
 }
 
 function renderUsuarios(usuarios) {
@@ -1230,13 +1261,14 @@ formEditarCliente.addEventListener('submit', async (e) => {
 });
 
 // SERVICIOS
-async function cargarServiciosCliente(clienteId) {
+async function cargarServiciosCliente(clienteId, page = 1) {
   listaServiciosCliente.innerHTML = 'Cargando servicios...';
   formEditarServicio.classList.add('oculto');
   textoSinServicioSeleccionado.classList.remove('oculto');
 
   try {
-    const res = await fetch(`/api/servicios?cliente_id=${clienteId}`);
+    const q = buscarServicios.value.trim();
+    const res = await fetch(`/api/servicios?cliente_id=${clienteId}&q=${encodeURIComponent(q)}&page=${page}&limit=20`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -1245,7 +1277,10 @@ async function cargarServiciosCliente(clienteId) {
     }
 
     serviciosCache = data.servicios || [];
+    serviciosPagination = data.pagination || serviciosPagination;
+
     renderServicios(serviciosCache);
+    actualizarPaginacionServicios();
   } catch (error) {
     listaServiciosCliente.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
   }
@@ -1288,7 +1323,7 @@ formNuevoServicio.addEventListener('submit', async (e) => {
     nuevoServicioActivo.checked = true;
 
     setResultado(adminNuevoServicioResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
-    await cargarServiciosCliente(clienteSeleccionadoId);
+    await cargarServiciosCliente(clienteSeleccionadoId, 1);
   } catch (error) {
     setResultado(adminNuevoServicioResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
   }
@@ -1325,7 +1360,7 @@ formEditarServicio.addEventListener('submit', async (e) => {
     }
 
     setResultado(adminServicioResultado, 'estado-ok', `<strong>OK:</strong> ${data.mensaje}`);
-    await cargarServiciosCliente(clienteSeleccionadoId);
+    await cargarServiciosCliente(clienteSeleccionadoId, serviciosPagination.page);
   } catch (error) {
     setResultado(adminServicioResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
   }

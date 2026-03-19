@@ -12,7 +12,7 @@
     <main class="main" id="loginContainer">
       <section class="card login-card">
         <h2>Ingreso al portal</h2>
-        <div id="loginVersion" class="login-version">Versión 0.2.1</div>
+        <div id="loginVersion" class="login-version">Versión 0.2.2</div>
 
         <form id="loginForm" class="form">
           <label for="login_email">Email</label>
@@ -319,10 +319,17 @@
                 <hr>
 
                 <h3>BPI / Servicios del cliente seleccionado</h3>
-                <div class="panel-helper">Filtra servicios por BPI, nombre o dirección.</div>
+                <div class="panel-helper">Búsqueda server-side con paginación dentro del cliente seleccionado.</div>
                 <div class="admin-search">
                   <input id="buscarServicios" placeholder="Buscar servicio/BPI...">
                 </div>
+
+                <div class="paginacion-linea">
+                  <button type="button" class="btn-secundario" id="btnServiciosPrev">Anterior</button>
+                  <span id="serviciosPaginaInfo">Página 1 de 1</span>
+                  <button type="button" class="btn-secundario" id="btnServiciosNext">Siguiente</button>
+                </div>
+
                 <div id="listaServiciosCliente" class="lista-reglas list-scroll"></div>
 
                 <form id="formNuevoServicio" class="form oculto">
