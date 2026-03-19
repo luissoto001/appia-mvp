@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -12,7 +12,13 @@
     <main class="main" id="loginContainer">
       <section class="card login-card">
         <h2>Ingreso al portal</h2>
-        <div id="loginVersion" class="login-version">Versión 0.4.0</div>
+        <div class="login-subtitle">Portal de gestión y seguimiento de tickets</div>
+        <ul class="login-benefits">
+          <li>Consulta de tickets por BPI o número</li>
+          <li>Reportería ejecutiva con filtros</li>
+          <li>Administración por perfil y cliente</li>
+        </ul>
+        <div id="loginVersion" class="login-version">Versión 0.5.1</div>
 
         <form id="loginForm" class="form">
           <label for="login_email">Email</label>
@@ -52,9 +58,20 @@
           </div>
 
           <div class="acciones-grid">
-            <button class="accion-btn" id="btnMostrarConsulta" type="button">Consultar ticket</button>
-            <button class="accion-btn" id="btnMostrarCreacion" type="button">Ingresar ticket</button>
-            <button class="accion-btn oculto" id="btnMostrarAdmin" type="button">Admin</button>
+            <div class="menu-card" id="btnMostrarConsulta">
+              <h3>Consultar ticket</h3>
+              <p>Revisa el estado, seguimiento y trazabilidad de un ticket.</p>
+            </div>
+
+            <div class="menu-card" id="btnMostrarCreacion">
+              <h3>Ingresar ticket</h3>
+              <p>Genera una nueva solicitud para uno de tus servicios BPI.</p>
+            </div>
+
+            <div class="menu-card oculto" id="btnMostrarAdmin">
+              <h3>Panel de administración</h3>
+              <p>Gestiona reglas, clientes, usuarios, servicios y reportería.</p>
+            </div>
           </div>
         </section>
 
@@ -133,6 +150,8 @@
             <h2>Panel de administración</h2>
             <button class="btn-secundario" id="btnVolverAdmin" type="button">Volver</button>
           </div>
+
+          <div class="version-admin">APPia MVP · v0.5.1</div>
 
           <p class="intro">Administración de reglas, clientes, servicios, usuarios y reportería.</p>
 
