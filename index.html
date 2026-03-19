@@ -421,18 +421,18 @@
 
           <div id="adminReportesPanel" class="oculto">
             <div class="reportes-grid">
-              <div class="kpi-card">
+              <button class="kpi-card kpi-click" id="kpiCardTotal" type="button">
                 <span>Total tickets</span>
                 <strong id="kpiTotalTickets">0</strong>
-              </div>
-              <div class="kpi-card">
+              </button>
+              <button class="kpi-card kpi-click" id="kpiCardAbiertos" type="button">
                 <span>Tickets abiertos</span>
                 <strong id="kpiAbiertos">0</strong>
-              </div>
-              <div class="kpi-card">
+              </button>
+              <button class="kpi-card kpi-click" id="kpiCardCerrados" type="button">
                 <span>Tickets cerrados</span>
                 <strong id="kpiCerrados">0</strong>
-              </div>
+              </button>
               <div class="kpi-card">
                 <span>Clientes con tickets</span>
                 <strong id="kpiClientesConTickets">0</strong>
@@ -461,6 +461,15 @@
                 <h3>Últimos tickets</h3>
                 <div id="reporteRecientes"></div>
               </div>
+            </div>
+
+            <div class="card-interno">
+              <div class="seccion-header">
+                <h3>Detalle de tickets</h3>
+                <button class="btn-secundario oculto" id="btnCerrarDetalleReportes" type="button">Cerrar detalle</button>
+              </div>
+              <div id="detalleReportesVacio" class="intro">Haz clic en un KPI o barra para ver el detalle de tickets.</div>
+              <div id="detalleReportesLista"></div>
             </div>
 
             <div id="adminReporteResultado" class="resultado oculto"></div>

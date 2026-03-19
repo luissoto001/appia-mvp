@@ -150,6 +150,13 @@ const reportePorTipologia = document.getElementById('reportePorTipologia');
 const reportePorCliente = document.getElementById('reportePorCliente');
 const reporteRecientes = document.getElementById('reporteRecientes');
 const adminReporteResultado = document.getElementById('adminReporteResultado');
+const detalleReportesVacio = document.getElementById('detalleReportesVacio');
+const detalleReportesLista = document.getElementById('detalleReportesLista');
+const btnCerrarDetalleReportes = document.getElementById('btnCerrarDetalleReportes');
+
+const kpiCardTotal = document.getElementById('kpiCardTotal');
+const kpiCardAbiertos = document.getElementById('kpiCardAbiertos');
+const kpiCardCerrados = document.getElementById('kpiCardCerrados');
 
 let clienteSeleccionadoId = null;
 
@@ -199,6 +206,11 @@ tabReportes.onclick = async () => {
 };
 
 modoConsulta.addEventListener('change', actualizarModoConsulta);
+btnCerrarDetalleReportes.onclick = limpiarDetalleReportes;
+
+kpiCardTotal.onclick = () => cargarDetalleReportes('todos');
+kpiCardAbiertos.onclick = () => cargarDetalleReportes('abiertos');
+kpiCardCerrados.onclick = () => cargarDetalleReportes('cerrados');
 
 function ocultarTodasLasSecciones() {
   menuPrincipal.classList.add('oculto');
@@ -341,6 +353,121 @@ function actualizarModoConsulta() {
   }
 }
 
+function sumarMinutos(fechaBase, minutos) {
+  return new Date(new Date(fechaBase).getTime() + minutos * 60000);
+}
+
+function formatearHora(fecha) {
+  return fecha.toLocaleTimeString('es-CL', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function construirTimelineDemo(ticket) {
+  const inicio = new Date(ticket.created_at);
+  const eventos = [
+    {
+      hora: formatearHora(inicio),
+      titulo: 'Ticket creado',
+      detalle: `Ticket ${ticket.ticket_numero} ingresado`
+    }
+  ];
+
+  const asignado = sumarMinutos(inicio, 20);
+  eventos.push({
+    hora: formatearHora(asignado),
+    titulo: 'Asignado a especialistas',
+    detalle: `Grupo resolutor: ${ticket.area_resolutora}`
+  });
+
+  const analisis = sumarMinutos(inicio, 90);
+  eventos.push({
+    hora: formatearHora(analisis),
+    titulo: 'En análisis',
+    detalle: `Tipología: ${ticket.tipologia}`
+  });
+
+  if (ticket.estado === 'Ingresado') {
+    return {
+      actual: 'Ticket ingresado',
+      eventos,
+      actualIndex: 0
+    };
+  }
+
+  if (ticket.estado === 'En proceso') {
+    return {
+      actual: 'En proceso',
+      eventos,
+      actualIndex: 2
+    };
+  }
+
+  if (ticket.estado === 'Derivado') {
+    const derivado = sumarMinutos(inicio, 150);
+    eventos.push({
+      hora: formatearHora(derivado),
+      titulo: 'Ticket derivado',
+      detalle: 'Escalado a nueva célula de atención'
+    });
+
+    return {
+      actual: 'Derivado',
+      eventos,
+      actualIndex: 3
+    };
+  }
+
+  if (ticket.estado === 'Resuelto' || ticket.estado === 'Cerrado') {
+    const cierre = sumarMinutos(inicio, 240);
+    eventos.push({
+      hora: formatearHora(cierre),
+      titulo: ticket.estado === 'Cerrado' ? 'Ticket cerrado' : 'Ticket resuelto',
+      detalle: `Estado final: ${ticket.estado}`
+    });
+
+    return {
+      actual: ticket.estado,
+      eventos,
+      actualIndex: 3
+    };
+  }
+
+  return {
+    actual: ticket.estado,
+    eventos,
+    actualIndex: eventos.length - 1
+  };
+}
+
+function renderTimelineHorizontal(ticket) {
+  const timeline = construirTimelineDemo(ticket);
+
+  const html = timeline.eventos.map((evento, index) => {
+    const estadoClase = index <= timeline.actualIndex ? 'timeline-step activo' : 'timeline-step';
+    return `
+      <div class="${estadoClase}">
+        <div class="timeline-dot"></div>
+        <div class="timeline-content">
+          <div class="timeline-hour">${evento.hora}</div>
+          <div class="timeline-title">${evento.titulo}</div>
+          <div class="timeline-detail">${evento.detalle}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="timeline-wrapper">
+      <div class="timeline-status"><strong>Estado actual:</strong> ${timeline.actual}</div>
+      <div class="timeline-horizontal">
+        ${html}
+      </div>
+    </div>
+  `;
+}
+
 function renderTicketIndividual(data) {
   const ticketHtml = data.ticket
     ? `
@@ -354,6 +481,7 @@ function renderTicketIndividual(data) {
         <strong>Mensaje automático:</strong>
         <p>${data.mensaje || 'Sin mensaje disponible.'}</p>
       </div>
+      ${data.modo === 'ticket' ? renderTimelineHorizontal(data.ticket) : ''}
     `
     : `<div class="resultado-item"><strong>Mensaje:</strong> ${data.mensaje}</div>`;
 
@@ -397,7 +525,7 @@ function renderTicketsAbiertos(data) {
   `;
 }
 
-function renderBarras(items) {
+function renderBarras(items, tipo) {
   if (!items || items.length === 0) {
     return '<p>Sin datos.</p>';
   }
@@ -407,7 +535,7 @@ function renderBarras(items) {
   return items.map((item) => {
     const porcentaje = Math.round((item.total / maximo) * 100);
     return `
-      <div class="barra-item">
+      <button type="button" class="barra-item barra-click" data-tipo="${tipo}" data-valor="${item.nombre}">
         <div class="barra-label">
           <span>${item.nombre}</span>
           <strong>${item.total}</strong>
@@ -415,7 +543,7 @@ function renderBarras(items) {
         <div class="barra-track">
           <div class="barra-fill" style="width:${porcentaje}%"></div>
         </div>
-      </div>
+      </button>
     `;
   }).join('');
 }
@@ -435,6 +563,55 @@ function renderRecientes(items) {
       <hr>
     </div>
   `).join('');
+}
+
+function renderDetalleReportes(tickets) {
+  if (!tickets || tickets.length === 0) {
+    return '<p>No hay tickets para este filtro.</p>';
+  }
+
+  return tickets.map((ticket) => `
+    <div class="detalle-ticket-card">
+      <div class="resultado-item"><strong>Ticket:</strong> ${ticket.ticket_numero}</div>
+      <div class="resultado-item"><strong>Cliente:</strong> ${ticket.cliente_nombre || 'No disponible'}</div>
+      <div class="resultado-item"><strong>Estado:</strong> ${ticket.estado}</div>
+      <div class="resultado-item"><strong>Área resolutora:</strong> ${ticket.area_resolutora}</div>
+      <div class="resultado-item"><strong>Tipología:</strong> ${ticket.tipologia}</div>
+      <div class="resultado-item"><strong>BPI:</strong> ${ticket.bpi}</div>
+      <div class="resultado-item"><strong>Descripción:</strong> ${ticket.descripcion || ''}</div>
+      ${renderTimelineHorizontal(ticket)}
+    </div>
+  `).join('');
+}
+
+function limpiarDetalleReportes() {
+  detalleReportesLista.innerHTML = '';
+  detalleReportesVacio.classList.remove('oculto');
+  btnCerrarDetalleReportes.classList.add('oculto');
+}
+
+async function cargarDetalleReportes(filtro, valor = '') {
+  detalleReportesVacio.classList.add('oculto');
+  btnCerrarDetalleReportes.classList.remove('oculto');
+  detalleReportesLista.innerHTML = 'Cargando detalle...';
+
+  try {
+    const url = valor
+      ? `/api/reportes?modo=detalle&filtro=${encodeURIComponent(filtro)}&valor=${encodeURIComponent(valor)}`
+      : `/api/reportes?modo=detalle&filtro=${encodeURIComponent(filtro)}`;
+
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!res.ok) {
+      detalleReportesLista.innerHTML = `<div class="resultado estado-error">${data.error || 'No fue posible cargar el detalle'}</div>`;
+      return;
+    }
+
+    detalleReportesLista.innerHTML = renderDetalleReportes(data.tickets);
+  } catch (error) {
+    detalleReportesLista.innerHTML = `<div class="resultado estado-error">${error.message}</div>`;
+  }
 }
 
 // LOGIN
@@ -1073,6 +1250,7 @@ formEditarUsuario.addEventListener('submit', async (e) => {
 async function cargarReportesAdmin() {
   setResultado(adminReporteResultado, '', 'Cargando reportería...');
   adminReporteResultado.classList.add('oculto');
+  limpiarDetalleReportes();
 
   try {
     const res = await fetch('/api/reportes');
@@ -1088,10 +1266,16 @@ async function cargarReportesAdmin() {
     kpiCerrados.innerText = data.resumen.cerrados;
     kpiClientesConTickets.innerText = data.resumen.clientes_con_tickets;
 
-    reportePorEstado.innerHTML = renderBarras(data.por_estado);
-    reportePorTipologia.innerHTML = renderBarras(data.por_tipologia);
-    reportePorCliente.innerHTML = renderBarras(data.por_cliente);
+    reportePorEstado.innerHTML = renderBarras(data.por_estado, 'estado');
+    reportePorTipologia.innerHTML = renderBarras(data.por_tipologia, 'tipologia');
+    reportePorCliente.innerHTML = renderBarras(data.por_cliente, 'cliente');
     reporteRecientes.innerHTML = renderRecientes(data.recientes);
+
+    document.querySelectorAll('.barra-click').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        cargarDetalleReportes(btn.dataset.tipo, btn.dataset.valor);
+      });
+    });
 
     adminReporteResultado.classList.add('oculto');
   } catch (error) {

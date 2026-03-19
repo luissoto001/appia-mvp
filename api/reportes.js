@@ -13,6 +13,13 @@ function agruparPor(items, key) {
     .sort((a, b) => b.total - a.total);
 }
 
+function enriquecerTickets(tickets, clientesPorId) {
+  return (tickets || []).map((ticket) => ({
+    ...ticket,
+    cliente_nombre: clientesPorId[ticket.cliente_id] || 'Cliente no identificado'
+  }));
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method !== 'GET') {
@@ -20,6 +27,8 @@ export default async function handler(req, res) {
         error: 'Método no permitido'
       });
     }
+
+    const { modo, filtro, valor } = req.query || {};
 
     const { data: tickets, error: ticketsError } = await supabase
       .from('tickets')
@@ -49,15 +58,35 @@ export default async function handler(req, res) {
       clientesPorId[cliente.id] = cliente.nombre_empresa;
     });
 
+    const ticketsConCliente = enriquecerTickets(tickets, clientesPorId);
     const abiertosEstados = ['Ingresado', 'En proceso', 'Derivado'];
-    const totalTickets = tickets.length;
-    const abiertos = tickets.filter((t) => abiertosEstados.includes(t.estado)).length;
-    const cerrados = totalTickets - abiertos;
 
-    const ticketsConCliente = tickets.map((ticket) => ({
-      ...ticket,
-      cliente_nombre: clientesPorId[ticket.cliente_id] || 'Cliente no identificado'
-    }));
+    if (modo === 'detalle') {
+      let filtrados = [...ticketsConCliente];
+
+      if (filtro === 'abiertos') {
+        filtrados = filtrados.filter((t) => abiertosEstados.includes(t.estado));
+      } else if (filtro === 'cerrados') {
+        filtrados = filtrados.filter((t) => !abiertosEstados.includes(t.estado));
+      } else if (filtro === 'estado' && valor) {
+        filtrados = filtrados.filter((t) => t.estado === valor);
+      } else if (filtro === 'tipologia' && valor) {
+        filtrados = filtrados.filter((t) => t.tipologia === valor);
+      } else if (filtro === 'cliente' && valor) {
+        filtrados = filtrados.filter((t) => t.cliente_nombre === valor);
+      } else if (filtro === 'todos') {
+        filtrados = [...ticketsConCliente];
+      }
+
+      return res.status(200).json({
+        ok: true,
+        tickets: filtrados
+      });
+    }
+
+    const totalTickets = ticketsConCliente.length;
+    const abiertos = ticketsConCliente.filter((t) => abiertosEstados.includes(t.estado)).length;
+    const cerrados = totalTickets - abiertos;
 
     const porEstado = agruparPor(ticketsConCliente, 'estado');
     const porTipologia = agruparPor(ticketsConCliente, 'tipologia');
