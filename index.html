@@ -133,7 +133,7 @@
             <button class="btn-secundario" id="btnVolverAdmin" type="button">Volver</button>
           </div>
 
-          <p class="intro">Administración de reglas, clientes, servicios y usuarios.</p>
+          <p class="intro">Administración de reglas, clientes, servicios, usuarios y reportería.</p>
 
           <div class="cliente-box">
             <div><strong>Usuario admin:</strong> <span id="adminNombre"></span></div>
@@ -145,6 +145,7 @@
             <button type="button" class="btn-secundario admin-tab-btn" id="tabMensajes">Mensajes</button>
             <button type="button" class="btn-secundario admin-tab-btn" id="tabClientes">Clientes</button>
             <button type="button" class="btn-secundario admin-tab-btn" id="tabUsuarios">Usuarios</button>
+            <button type="button" class="btn-secundario admin-tab-btn" id="tabReportes">Reportes</button>
           </div>
 
           <div id="adminMensajesPanel">
@@ -416,6 +417,53 @@
                 <p id="textoSinUsuarioSeleccionado" class="intro">Selecciona un usuario para editarlo.</p>
               </div>
             </div>
+          </div>
+
+          <div id="adminReportesPanel" class="oculto">
+            <div class="reportes-grid">
+              <div class="kpi-card">
+                <span>Total tickets</span>
+                <strong id="kpiTotalTickets">0</strong>
+              </div>
+              <div class="kpi-card">
+                <span>Tickets abiertos</span>
+                <strong id="kpiAbiertos">0</strong>
+              </div>
+              <div class="kpi-card">
+                <span>Tickets cerrados</span>
+                <strong id="kpiCerrados">0</strong>
+              </div>
+              <div class="kpi-card">
+                <span>Clientes con tickets</span>
+                <strong id="kpiClientesConTickets">0</strong>
+              </div>
+            </div>
+
+            <div class="admin-grid">
+              <div class="card-interno">
+                <h3>Tickets por estado</h3>
+                <div id="reportePorEstado"></div>
+              </div>
+
+              <div class="card-interno">
+                <h3>Tickets por tipología</h3>
+                <div id="reportePorTipologia"></div>
+              </div>
+            </div>
+
+            <div class="admin-grid">
+              <div class="card-interno">
+                <h3>Tickets por cliente</h3>
+                <div id="reportePorCliente"></div>
+              </div>
+
+              <div class="card-interno">
+                <h3>Últimos tickets</h3>
+                <div id="reporteRecientes"></div>
+              </div>
+            </div>
+
+            <div id="adminReporteResultado" class="resultado oculto"></div>
           </div>
         </section>
       </main>

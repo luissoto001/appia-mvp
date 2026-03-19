@@ -44,9 +44,12 @@ const adminRol = document.getElementById('adminRol');
 const tabMensajes = document.getElementById('tabMensajes');
 const tabClientes = document.getElementById('tabClientes');
 const tabUsuarios = document.getElementById('tabUsuarios');
+const tabReportes = document.getElementById('tabReportes');
+
 const adminMensajesPanel = document.getElementById('adminMensajesPanel');
 const adminClientesPanel = document.getElementById('adminClientesPanel');
 const adminUsuariosPanel = document.getElementById('adminUsuariosPanel');
+const adminReportesPanel = document.getElementById('adminReportesPanel');
 
 // Reglas
 const listaReglas = document.getElementById('listaReglas');
@@ -137,6 +140,17 @@ const usuarioRolAdmin = document.getElementById('usuario_rol_admin');
 const usuarioPasswordAdmin = document.getElementById('usuario_password_admin');
 const usuarioActivoAdmin = document.getElementById('usuario_activo_admin');
 
+// Reportes
+const kpiTotalTickets = document.getElementById('kpiTotalTickets');
+const kpiAbiertos = document.getElementById('kpiAbiertos');
+const kpiCerrados = document.getElementById('kpiCerrados');
+const kpiClientesConTickets = document.getElementById('kpiClientesConTickets');
+const reportePorEstado = document.getElementById('reportePorEstado');
+const reportePorTipologia = document.getElementById('reportePorTipologia');
+const reportePorCliente = document.getElementById('reportePorCliente');
+const reporteRecientes = document.getElementById('reporteRecientes');
+const adminReporteResultado = document.getElementById('adminReporteResultado');
+
 let clienteSeleccionadoId = null;
 
 // Navegación
@@ -179,6 +193,11 @@ tabUsuarios.onclick = async () => {
   await cargarClientesParaSelectUsuario();
 };
 
+tabReportes.onclick = async () => {
+  mostrarTabReportes();
+  await cargarReportesAdmin();
+};
+
 modoConsulta.addEventListener('change', actualizarModoConsulta);
 
 function ocultarTodasLasSecciones() {
@@ -197,18 +216,28 @@ function mostrarTabMensajes() {
   adminMensajesPanel.classList.remove('oculto');
   adminClientesPanel.classList.add('oculto');
   adminUsuariosPanel.classList.add('oculto');
+  adminReportesPanel.classList.add('oculto');
 }
 
 function mostrarTabClientes() {
   adminMensajesPanel.classList.add('oculto');
   adminClientesPanel.classList.remove('oculto');
   adminUsuariosPanel.classList.add('oculto');
+  adminReportesPanel.classList.add('oculto');
 }
 
 function mostrarTabUsuarios() {
   adminMensajesPanel.classList.add('oculto');
   adminClientesPanel.classList.add('oculto');
   adminUsuariosPanel.classList.remove('oculto');
+  adminReportesPanel.classList.add('oculto');
+}
+
+function mostrarTabReportes() {
+  adminMensajesPanel.classList.add('oculto');
+  adminClientesPanel.classList.add('oculto');
+  adminUsuariosPanel.classList.add('oculto');
+  adminReportesPanel.classList.remove('oculto');
 }
 
 function guardarSesion(data) {
@@ -366,6 +395,46 @@ function renderTicketsAbiertos(data) {
     <div class="resultado-item"><strong>Total abiertos:</strong> ${data.tickets.length}</div>
     ${items}
   `;
+}
+
+function renderBarras(items) {
+  if (!items || items.length === 0) {
+    return '<p>Sin datos.</p>';
+  }
+
+  const maximo = Math.max(...items.map((i) => i.total), 1);
+
+  return items.map((item) => {
+    const porcentaje = Math.round((item.total / maximo) * 100);
+    return `
+      <div class="barra-item">
+        <div class="barra-label">
+          <span>${item.nombre}</span>
+          <strong>${item.total}</strong>
+        </div>
+        <div class="barra-track">
+          <div class="barra-fill" style="width:${porcentaje}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderRecientes(items) {
+  if (!items || items.length === 0) {
+    return '<p>Sin tickets recientes.</p>';
+  }
+
+  return items.map((ticket) => `
+    <div class="ticket-list-item">
+      <div class="resultado-item"><strong>${ticket.ticket_numero}</strong> - ${ticket.cliente_nombre}</div>
+      <div class="resultado-item">Estado: ${ticket.estado}</div>
+      <div class="resultado-item">Tipología: ${ticket.tipologia}</div>
+      <div class="resultado-item">BPI: ${ticket.bpi}</div>
+      <div class="resultado-item">Fecha: ${new Date(ticket.created_at).toLocaleString()}</div>
+      <hr>
+    </div>
+  `).join('');
 }
 
 // LOGIN
@@ -999,3 +1068,33 @@ formEditarUsuario.addEventListener('submit', async (e) => {
     setResultado(adminUsuarioResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
   }
 });
+
+// REPORTES
+async function cargarReportesAdmin() {
+  setResultado(adminReporteResultado, '', 'Cargando reportería...');
+  adminReporteResultado.classList.add('oculto');
+
+  try {
+    const res = await fetch('/api/reportes');
+    const data = await res.json();
+
+    if (!res.ok) {
+      setResultado(adminReporteResultado, 'estado-error', `<strong>Error:</strong> ${data.error || 'No fue posible cargar reportes'}`);
+      return;
+    }
+
+    kpiTotalTickets.innerText = data.resumen.total_tickets;
+    kpiAbiertos.innerText = data.resumen.abiertos;
+    kpiCerrados.innerText = data.resumen.cerrados;
+    kpiClientesConTickets.innerText = data.resumen.clientes_con_tickets;
+
+    reportePorEstado.innerHTML = renderBarras(data.por_estado);
+    reportePorTipologia.innerHTML = renderBarras(data.por_tipologia);
+    reportePorCliente.innerHTML = renderBarras(data.por_cliente);
+    reporteRecientes.innerHTML = renderRecientes(data.recientes);
+
+    adminReporteResultado.classList.add('oculto');
+  } catch (error) {
+    setResultado(adminReporteResultado, 'estado-error', `<strong>Error:</strong> ${error.message}`);
+  }
+}
