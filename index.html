@@ -51,17 +51,9 @@
           </div>
 
           <div class="acciones-grid">
-            <button class="accion-btn" id="btnMostrarConsulta" type="button">
-              Consultar ticket
-            </button>
-
-            <button class="accion-btn" id="btnMostrarCreacion" type="button">
-              Ingresar ticket
-            </button>
-
-            <button class="accion-btn oculto" id="btnMostrarAdmin" type="button">
-              Admin
-            </button>
+            <button class="accion-btn" id="btnMostrarConsulta" type="button">Consultar ticket</button>
+            <button class="accion-btn" id="btnMostrarCreacion" type="button">Ingresar ticket</button>
+            <button class="accion-btn oculto" id="btnMostrarAdmin" type="button">Admin</button>
           </div>
         </section>
 
@@ -71,9 +63,7 @@
             <button class="btn-secundario" id="btnVolverConsulta" type="button">Volver</button>
           </div>
 
-          <p class="intro">
-            Ingresa el código de servicio BPI para consultar el estado del ticket asociado.
-          </p>
+          <p class="intro">Ingresa el código de servicio BPI para consultar el estado del ticket asociado.</p>
 
           <div class="cliente-box">
             <div><strong>Cliente:</strong> <span id="clienteNombreConsulta"></span></div>
@@ -95,9 +85,7 @@
             <button class="btn-secundario" id="btnVolverCreacion" type="button">Volver</button>
           </div>
 
-          <p class="intro">
-            Ingresa los datos del servicio para generar un nuevo ticket.
-          </p>
+          <p class="intro">Ingresa los datos del servicio para generar un nuevo ticket.</p>
 
           <div class="cliente-box">
             <div><strong>Cliente:</strong> <span id="clienteNombreCreacion"></span></div>
@@ -130,9 +118,7 @@
             <button class="btn-secundario" id="btnVolverAdmin" type="button">Volver</button>
           </div>
 
-          <p class="intro">
-            Administración de reglas de mensajes automáticos y clientes.
-          </p>
+          <p class="intro">Administración de reglas de mensajes automáticos, clientes y usuarios.</p>
 
           <div class="cliente-box">
             <div><strong>Usuario admin:</strong> <span id="adminNombre"></span></div>
@@ -143,6 +129,7 @@
           <div class="admin-tabs">
             <button type="button" class="btn-secundario admin-tab-btn" id="tabMensajes">Mensajes</button>
             <button type="button" class="btn-secundario admin-tab-btn" id="tabClientes">Clientes</button>
+            <button type="button" class="btn-secundario admin-tab-btn" id="tabUsuarios">Usuarios</button>
           </div>
 
           <div id="adminMensajesPanel">
@@ -221,6 +208,45 @@
 
                 <div id="adminClienteResultado" class="resultado oculto"></div>
                 <p id="textoSinClienteSeleccionado" class="intro">Selecciona un cliente para editarlo.</p>
+              </div>
+            </div>
+          </div>
+
+          <div id="adminUsuariosPanel" class="oculto">
+            <div class="admin-grid">
+              <div class="card-interno">
+                <h3>Usuarios existentes</h3>
+                <div id="listaUsuarios" class="lista-reglas"></div>
+              </div>
+
+              <div class="card-interno">
+                <h3>Editar usuario</h3>
+
+                <form id="formEditarUsuario" class="form oculto">
+                  <input type="hidden" id="usuario_id_admin">
+
+                  <label for="usuario_nombre_admin">Nombre usuario</label>
+                  <input id="usuario_nombre_admin" disabled>
+
+                  <label for="usuario_email_admin">Email</label>
+                  <input id="usuario_email_admin" disabled>
+
+                  <label for="usuario_rol_admin">Rol</label>
+                  <input id="usuario_rol_admin" disabled>
+
+                  <label for="usuario_password_admin">Nueva contraseña</label>
+                  <input id="usuario_password_admin" type="text" placeholder="Ingresa nueva contraseña">
+
+                  <label class="check-line">
+                    <input type="checkbox" id="usuario_activo_admin">
+                    Usuario activo
+                  </label>
+
+                  <button type="submit">Guardar cambios</button>
+                </form>
+
+                <div id="adminUsuarioResultado" class="resultado oculto"></div>
+                <p id="textoSinUsuarioSeleccionado" class="intro">Selecciona un usuario para editarlo.</p>
               </div>
             </div>
           </div>

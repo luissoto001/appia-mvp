@@ -315,3 +315,6 @@
       width: 100%;
     }
   }
+  .admin-tab-btn {
+    min-width: 120px;
+  }
